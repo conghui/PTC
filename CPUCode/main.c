@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <limits.h>
+#include <string.h>
 #include "Maxfiles.h" 			// Includes .max files
 #include <MaxSLiCInterface.h>	// Simple Live CPU interface
 
@@ -84,17 +85,24 @@ int main()
 	searchWindowMax(inputImage, windowMax, imageRow, imageCol, windowLength);
 	print2D(windowMax, windowRow, windowCol);
 
-	free(inputImage);
-	free(windowMax);
 
 
-
+	int *d_windowMax = malloc(imageRow * imageCol * sizeof *d_windowMax);
+	assert(d_windowMax);
+	memset(d_windowMax, 0, imageRow * imageCol * sizeof *d_windowMax);
 
 	printf("Running DFE\n");
-	MovingAverageWeighted_weighted(8, coeffs, dataIn, dataOut);
+	FindWindowMaxAndRadius(imageRow * imageCol, inputImage, d_windowMax);
 
-	for (int i = 1; i < 7; i++) // Ignore edge values
-		printf("dataOut[%d] = %f\n", i, dataOut[i]);
+	printf("print d_windowMax\n");
+	print2D(d_windowMax, imageRow, imageCol);
+//	FindWindowMaxAndRadius(8, coeffs, dataIn, dataOut);
+//
+//	for (int i = 1; i < 7; i++) // Ignore edge values
+//		printf("dataOut[%d] = %f\n", i, dataOut[i]);
 
+
+	free(inputImage);
+	free(windowMax);
 	return 0;
 }

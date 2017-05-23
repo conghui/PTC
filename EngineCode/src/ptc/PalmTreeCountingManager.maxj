@@ -15,7 +15,6 @@ import com.maxeler.maxcompiler.v2.kernelcompiler.Kernel;
 import com.maxeler.maxcompiler.v2.managers.engine_interfaces.CPUTypes;
 import com.maxeler.maxcompiler.v2.managers.engine_interfaces.EngineInterface;
 import com.maxeler.maxcompiler.v2.managers.engine_interfaces.InterfaceParam;
-import com.maxeler.maxcompiler.v2.managers.engine_interfaces.InterfaceParamArray;
 import com.maxeler.maxcompiler.v2.managers.standard.Manager;
 import com.maxeler.maxcompiler.v2.managers.standard.Manager.IOType;
 
@@ -28,12 +27,12 @@ class PalmTreeCountingManager {
 		EngineParameters params = new EngineParameters(args);
 		Manager manager = new Manager(params);
 		Kernel kernel = new FindWindowMaxAndRadiusKernel(
-				manager.makeKernelParameters(), maxWindowSize);
-		manager.addMaxFileConstant("maxWindowSize", maxWindowSize);
+				manager.makeKernelParameters());
+//		manager.addMaxFileConstant("maxWindowSize", maxWindowSize);
 		manager.setKernel(kernel);
 		manager.setIO(IOType.ALL_CPU);
 		manager.createSLiCinterface(interfaceDefault());
-		manager.createSLiCinterface(interfaceVariable());
+//		manager.createSLiCinterface(interfaceVariable());
 		manager.build();
 	}
 
@@ -41,29 +40,46 @@ class PalmTreeCountingManager {
 		EngineInterface ei = new EngineInterface(
 				"default",
 				"Runs moving average with no weighting.");
-		InterfaceParam size = ei.addParam("size", CPUTypes.INT32);
-		ei.setScalar("FindWindowMaxAndRadiusKernel", "size", size);
-		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight0", defaultWeight);
-		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight1", defaultWeight);
-		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight2", defaultWeight);
-		ei.setTicks("FindWindowMaxAndRadiusKernel", size);
-		ei.setStream("x", CPUTypes.FLOAT, size * CPUTypes.FLOAT.sizeInBytes());
-		ei.setStream("y", CPUTypes.FLOAT, size * CPUTypes.FLOAT.sizeInBytes());
+		InterfaceParam imageSize = ei.addParam("imageSize", CPUTypes.INT32);
+//		ei.setScalar("FindWindowMaxAndRadiusKernel", "size", size);
+//		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight0", defaultWeight);
+//		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight1", defaultWeight);
+//		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight2", defaultWeight);
+		ei.setTicks("FindWindowMaxAndRadiusKernel", imageSize);
+
+		CPUTypes pixelType = CPUTypes.INT32;
+		ei.setStream("imageInput", pixelType, imageSize * pixelType.sizeInBytes());
+		ei.setStream("output", pixelType, imageSize * pixelType.sizeInBytes());
 		return ei;
 	}
 
-	static EngineInterface interfaceVariable() {
-		EngineInterface ei = new EngineInterface("weighted",
-				"Runs moving average with weighting.");
-		InterfaceParam size = ei.addParam("size", CPUTypes.INT32);
-		InterfaceParamArray weights = ei.addParamArray("weights", CPUTypes.FLOAT);
-		ei.setScalar("FindWindowMaxAndRadiusKernel", "size", size);
-		ei.setTicks("FindWindowMaxAndRadiusKernel", size);
-		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight0", weights[0]);
-		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight1", weights[1]);
-		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight2", weights[2]);
-		ei.setStream("x", CPUTypes.FLOAT, size * CPUTypes.FLOAT.sizeInBytes());
-		ei.setStream("y", CPUTypes.FLOAT, size * CPUTypes.FLOAT.sizeInBytes());
-		return ei;
-	}
+//	static EngineInterface interfaceDefault() {
+//		EngineInterface ei = new EngineInterface(
+//				"default",
+//				"Runs moving average with no weighting.");
+//		InterfaceParam size = ei.addParam("size", CPUTypes.INT32);
+//		ei.setScalar("FindWindowMaxAndRadiusKernel", "size", size);
+//		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight0", defaultWeight);
+//		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight1", defaultWeight);
+//		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight2", defaultWeight);
+//		ei.setTicks("FindWindowMaxAndRadiusKernel", size);
+//		ei.setStream("x", CPUTypes.FLOAT, size * CPUTypes.FLOAT.sizeInBytes());
+//		ei.setStream("y", CPUTypes.FLOAT, size * CPUTypes.FLOAT.sizeInBytes());
+//		return ei;
+//	}
+
+//	static EngineInterface interfaceVariable() {
+//		EngineInterface ei = new EngineInterface("weighted",
+//				"Runs moving average with weighting.");
+//		InterfaceParam size = ei.addParam("size", CPUTypes.INT32);
+//		InterfaceParamArray weights = ei.addParamArray("weights", CPUTypes.FLOAT);
+//		ei.setScalar("FindWindowMaxAndRadiusKernel", "size", size);
+//		ei.setTicks("FindWindowMaxAndRadiusKernel", size);
+//		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight0", weights[0]);
+//		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight1", weights[1]);
+//		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight2", weights[2]);
+//		ei.setStream("x", CPUTypes.FLOAT, size * CPUTypes.FLOAT.sizeInBytes());
+//		ei.setStream("y", CPUTypes.FLOAT, size * CPUTypes.FLOAT.sizeInBytes());
+//		return ei;
+//	}
 }

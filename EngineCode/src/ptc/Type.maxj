@@ -1,0 +1,8 @@
+package ptc;
+
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEType;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFETypeFactory;
+
+public class Type {
+	static DFEType pixelType = DFETypeFactory.dfeInt(32);
+}
