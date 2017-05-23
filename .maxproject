@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<maxCompilerManager version="2">
+<enginePart internalEngineSubproject="tutorial-chap03-example3-movingaverageweeighted_EngineCode" isSrcBin="false" isUseDefaultSelected="false" outputLocation="/PTC_EngineCode/bin" projectName="PTC"/>
+<cpuPart internalCpuSubproject="PTC_CPUCode"/>
+<watchedFiles/>
+</maxCompilerManager>

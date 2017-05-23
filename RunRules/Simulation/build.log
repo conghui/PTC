@@ -1,0 +1,39 @@
+Wed 05:57: ########################################## 
+Wed 05:57: Compiling.
+Wed 05:57: ########################################## 
+
+Wed 05:57: MaxCompiler version: 2015.1.1.
+Wed 05:57: Build Simulation run rule for PTC start time: Wed May 24 05:57:19 CST 2017.
+Wed 05:57: Project location: /home/rice/workspace/PTC.
+Wed 05:57: Detailed build log: /home/rice/workspace/PTC/RunRules/Simulation/build.log.
+
+Wed 05:57: Compiling Engine Code.
+Wed 05:57: Building FindWindowMaxAndRadius.max file. 
+Wed 05:57: Setting environment variable:
+Wed 05:57: MAXCOMPILER_BUILD_DIR : /home/rice/workspace/PTC/RunRules/Simulation/maxfiles
+Wed 05:57: MAX_BUILDPARAMS : DFEModel='MAIA' target='DFE_SIM' maxFileName='FindWindowMaxAndRadius'  
+Wed 05:57: Building output:
+Wed 05:57: MaxCompiler version: 2015.1.1
+Wed 05:57: Build "FindWindowMaxAndRadius" start time: Wed May 24 05:57:20 CST 2017
+Wed 05:57: Main build process running as user rice on host apartment
+Wed 05:57: Build location: /home/rice/workspace/PTC/RunRules/Simulation/maxfiles/FindWindowMaxAndRadius_MAIA_DFE_SIM
+Wed 05:57: Detailed build log available in "_build.log"
+Wed 05:57: Instantiating manager
+Wed 05:57: Instantiating kernel "FindWindowMaxAndRadiusKernel"
+Wed 05:57: Compiling manager (CPU I/O Only)
+Wed 05:57: 
+Wed 05:57: Compiling kernel "FindWindowMaxAndRadiusKernel"
+Wed 05:57: Running back-end simulation build (3 phases)
+Wed 05:57: (1/3) - Prepare MaxFile Data (GenerateMaxFileDataFile)
+Wed 05:57: (2/3) - Compile Simulation Modules (SimCompilePass)
+Wed 05:57: (3/3) - Generate MaxFile (AddSimObjectToMaxFilePass)
+Wed 05:57: MaxFile: /home/rice/workspace/PTC/RunRules/Simulation/maxfiles/FindWindowMaxAndRadius_MAIA_DFE_SIM/results/FindWindowMaxAndRadius.max (MD5Sum: 25f2c915de893ae145eefdd1696816ba)
+Wed 05:57: Build completed: Wed May 24 05:57:24 CST 2017 (took 4 secs)
+Wed 05:57: Executing command:
+Wed 05:57: cp /home/rice/workspace/PTC/RunRules/Simulation/maxfiles/FindWindowMaxAndRadius.h /home/rice/workspace/PTC/RunRules/Simulation/include/FindWindowMaxAndRadius.h 
+Wed 05:57: Command output:
+Wed 05:57: Building: FindWindowMaxAndRadius.max file finished.
+Wed 05:57: Engine build finished.
+Wed 05:57: Build completed: Wed May 24 05:57:24 CST 2017
+
+
