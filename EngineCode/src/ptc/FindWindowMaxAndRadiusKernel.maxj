@@ -11,6 +11,7 @@ package ptc;
 
 import com.maxeler.maxcompiler.v2.kernelcompiler.Kernel;
 import com.maxeler.maxcompiler.v2.kernelcompiler.KernelParameters;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.memory.Memory;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEType;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
 
@@ -22,8 +23,15 @@ class FindWindowMaxAndRadiusKernel extends Kernel {
 
 		DFEVar pixel = io.input("imageInput", pixelType);
 
+		Memory<DFEVar> windowMax = mem.alloc(pixelType, 2);
+
+		DFEVar currMax = windowMax.read(constant.var(false));
+		DFEVar newMax = pixel > currMax ? pixel : currMax;
+		windowMax.write(constant.var(false), newMax, constant.var(true));
+
+
 		DFEVar counter = control.count.simpleCounter(32);
-		debug.simPrintf("# %4d: %d\n", counter, pixel);
+		debug.simPrintf("cycle #%04d: pixel %d, currMax %d, newMax: %d\n", counter, pixel, currMax, newMax);
 
 		io.output("output", pixelType) <== pixel;
 	}
