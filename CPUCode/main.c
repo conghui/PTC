@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <limits.h>
 #include <string.h>
+#include <stdlib.h>
 #include "Maxfiles.h" 			// Includes .max files
 #include <MaxSLiCInterface.h>	// Simple Live CPU interface
 
@@ -12,7 +13,8 @@ void genData(int *data, int nrow, int ncol) {
 	int count = 0;
 	for (i = 0; i < nrow; i++) {
 		for (j = 0; j < ncol; j++) {
-			data[count] = count;
+//			data[count] = count;
+			data[count] = rand() % 1024;
 			count++;
 		}
 	}
@@ -32,15 +34,24 @@ int max(int a, int b) {
 	return a > b ? a : b;
 }
 
-int findWMax(const int *data, int ncol, int w) {
+int findWMax(const int *data, int row, int col, int ncol, int w) {
 	int i, j;
 	int ret = INT_MIN;
+	int rr = 0;
+	int cc = 0;
 	for (i = 0; i < w; i++) {
 		for (j = 0; j < w; j++) {
-			ret = max(ret, data[i*ncol+j]);
+			int r = i + row;
+			int c = j + col;
+			if (data[(r)*ncol+c] > ret) {
+				ret = data[(r)*ncol+c];
+				rr = r;
+				cc = c;
+			}
 		}
 	}
 
+	printf("windowMax: %d, row: %d, col: %d\n", ret, rr, cc);
 	return ret;
 }
 
@@ -55,21 +66,71 @@ void searchWindowMax(const int *data, int *winMax, int nrow, int ncol, int w) {
 	int winCount = 0;
 	for (i = 0; i < nrow; i += w) {
 		for (j = 0; j < ncol; j += w) {
-			winMax[winCount] = findWMax(&data[i*ncol+j], ncol, w);
+			winMax[winCount] = findWMax(data, i, j, ncol, w);
 			winCount++;
+		}
+	}
+}
+
+void calMeanRadius(const int *data, int nrow, int ncol, int radius) {
+	int c, r;
+
+	for (r = radius; r < nrow - radius; r++) {
+		for (c = radius; c < ncol - radius; c++) {
+			int d;
+			int diffEastMax = 0;
+			int diffWestMax = 0;
+			int maxEastDiffRadius = 0;
+			int maxWestDiffRadius = 0;
+			int south[2] = {0};
+			int north[2] = {0};
+			for (d = 0; d < radius; d++) {
+				/// east
+				int diff = abs(data[r*ncol+(c+d+1)] - data[r*ncol+(c+d)]);
+				if (diffEastMax < diff) {
+					diffEastMax = diff;
+					maxEastDiffRadius = d + 1;
+				}
+
+				// west
+				diff = abs(data[r*ncol+(c-d-1)] - data[r*ncol+(c-d)]);
+				if (diffWestMax < diff) {
+					diffWestMax = diff;
+					maxWestDiffRadius = d + 1;
+				}
+
+				// south
+				diff = abs(data[(r+d+1)*ncol+c] - data[(r+d)*ncol +c]);
+				if (south[0] < diff) {
+					south[0] = diff;
+					south[1] = d + 1;
+				}
+
+				diff = abs(data[(r-d-1)*ncol+c] - data[(r-d)*ncol +c]);
+				if (north[0] < diff) {
+					north[0] = diff;
+					north[1] = d + 1;
+				}
+			}
+//			printf("pixel: %d, eastDiff: %d, maxDiffRadius: %d, row: %d, col: %d\n", data[r*ncol+(c)], diffEastMax, maxEastDiffRadius, r, c);
+			printf("CPU pixel: %d, East(%d, %d), West(%d, %d), South(%d, %d), North(%d, %d)\n", data[r*ncol+(c)],
+					diffEastMax, maxEastDiffRadius,
+					diffWestMax, maxWestDiffRadius,
+					south[0], south[1], north[0], north[1]
+					);
+
 		}
 	}
 }
 
 int main()
 {
-	float coeffs[3] = {0.75, 1.5, 0.75};
-
-	const int imageCol = 12;		/// # of column
-	const int imageRow = 12;	/// # of row
+	const int imageCol = 12;		/// # of column, fast dimension
+	const int imageRow = 9;			/// # of row, slow dimension
 	const int windowLength = 3;	/// window is square
 	const int windowRow = imageRow / windowLength;
 	const int windowCol = imageCol / windowLength;
+	const int maxRadius = 4;
 
 	int *inputImage = malloc(imageCol * imageRow * sizeof *inputImage);
 	assert(inputImage);
@@ -85,7 +146,8 @@ int main()
 	searchWindowMax(inputImage, windowMax, imageRow, imageCol, windowLength);
 	print2D(windowMax, windowRow, windowCol);
 
-
+	printf("\ncalculate mean radius\n");
+	calMeanRadius(inputImage, imageRow, imageCol, maxRadius);
 
 	int *d_windowMax = malloc(imageRow * imageCol * sizeof *d_windowMax);
 	assert(d_windowMax);
@@ -94,8 +156,8 @@ int main()
 	printf("Running DFE\n");
 	FindWindowMaxAndRadius(imageRow * imageCol, inputImage, d_windowMax);
 
-	printf("print d_windowMax\n");
-	print2D(d_windowMax, imageRow, imageCol);
+//	printf("print d_windowMax\n");
+//	print2D(d_windowMax, imageRow, imageCol);
 //	FindWindowMaxAndRadius(8, coeffs, dataIn, dataOut);
 //
 //	for (int i = 1; i < 7; i++) // Ignore edge values

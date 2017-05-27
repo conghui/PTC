@@ -1,0 +1,11 @@
+package ptc;
+
+public class Constant {
+	public static final int NUM_PIXEL_IN_IMAGE_ROW = 12;		/// ncol, fast dimension
+	public static final int NUM_PIXEL_IN_IMAGE_COL = 9;			/// nrow, slow dimension
+	public static final int NUM_WINDOW_IN_IMAGE_ROW = 4;
+	public static final int NUM_WINDOW_IN_IMAGE_COL = 3;
+	public static final int NUM_PIXEL_IN_WINDOW_ROW = 3;
+	public static final int NUM_PIXEL_IN_WINDOW_COL = NUM_PIXEL_IN_WINDOW_ROW;
+	public static final int MAX_CIRCLE_RADIUS = 4;
+}

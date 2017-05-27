@@ -24,6 +24,7 @@ class PalmTreeCountingManager {
 	static final float defaultWeight = 1.0f;
 
 	public static void main(String[] args) {
+		validate();
 		EngineParameters params = new EngineParameters(args);
 		Manager manager = new Manager(params);
 		Kernel kernel = new FindWindowMaxAndRadiusKernel(
@@ -82,4 +83,16 @@ class PalmTreeCountingManager {
 //		ei.setStream("y", CPUTypes.FLOAT, size * CPUTypes.FLOAT.sizeInBytes());
 //		return ei;
 //	}
+
+	private static void validate() {
+		if (Constant.NUM_PIXEL_IN_IMAGE_COL != Constant.NUM_PIXEL_IN_WINDOW_COL * Constant.NUM_WINDOW_IN_IMAGE_COL) {
+			System.err.println("Constant.NUM_PIXEL_IN_IMAGE_COL != Constant.NUM_PIXEL_IN_WINDOW_COL * Constant.NUM_WINDOW_IN_IMAGE_COL");
+			System.exit(1);
+		}
+
+		if (Constant.NUM_PIXEL_IN_IMAGE_ROW != Constant.NUM_PIXEL_IN_WINDOW_ROW * Constant.NUM_WINDOW_IN_IMAGE_ROW) {
+			System.err.println("Constant.NUM_PIXEL_IN_IMAGE_ROW != Constant.NUM_PIXEL_IN_WINDOW_ROW * Constant.NUM_WINDOW_IN_IMAGE_ROW");
+			System.exit(1);
+		}
+	}
 }
