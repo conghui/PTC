@@ -1,57 +1,158 @@
-Tue 22:56: ########################################## 
-Tue 22:56: Compiling.
-Tue 22:56: ########################################## 
+Sat 16:46: ########################################## 
+Sat 16:46: Compiling.
+Sat 16:46: ########################################## 
 
-Tue 22:56: MaxCompiler version: 2015.1.1.
-Tue 22:56: Build Simulation run rule for PTC start time: Tue May 23 22:56:14 CST 2017.
-Tue 22:56: Project location: /home/rice/workspace/PTC.
-Tue 22:56: Detailed build log: /home/rice/workspace/PTC/RunRules/Simulation/build.log.
+Sat 16:46: MaxCompiler version: 2015.1.1.
+Sat 16:46: Build Simulation run rule for PTC start time: Sat May 27 16:46:44 CST 2017.
+Sat 16:46: Project location: /home/rice/projects/PTC.
+Sat 16:46: Detailed build log: /home/rice/projects/PTC/RunRules/Simulation/build.log.
 
-Tue 22:56: Compiling Engine Code.
-Tue 22:56: Building FindWindowMaxAndRadius.max file. 
-Tue 22:56: Setting environment variable:
-Tue 22:56: MAXCOMPILER_BUILD_DIR : /home/rice/workspace/PTC/RunRules/Simulation/maxfiles
-Tue 22:56: MAX_BUILDPARAMS : DFEModel='MAIA' target='DFE_SIM' maxFileName='FindWindowMaxAndRadius'  
-Tue 22:56: Building output:
-Tue 22:56: MaxCompiler version: 2015.1.1
-Tue 22:56: Build "FindWindowMaxAndRadius" start time: Tue May 23 22:56:15 CST 2017
-Tue 22:56: Main build process running as user rice on host apartment
-Tue 22:56: Build location: /home/rice/workspace/PTC/RunRules/Simulation/maxfiles/FindWindowMaxAndRadius_MAIA_DFE_SIM
-Tue 22:56: Detailed build log available in "_build.log"
-Tue 22:56: Instantiating manager
-Tue 22:56: Instantiating kernel "FindWindowMaxAndRadiusKernel"
-Tue 22:56: Compiling manager (CPU I/O Only)
-Tue 22:56: 
-Tue 22:56: Compiling kernel "FindWindowMaxAndRadiusKernel"
-Tue 22:56: ERROR: ----------------------------
-Tue 22:56: ERROR: Exception in thread "main":
-Tue 22:56: ERROR:  
-Tue 22:56: ERROR:   Found an illegal loop with a latency of 3 (>0).
-Tue 22:56: ERROR:   Illegal loop written to 
-Tue 22:56: ERROR:   /home/rice/workspace/PTC/RunRules/Simulation/maxfiles/FindWindowMaxAndRadius_MAIA_DFE_SIM/scratch/FindWindowMaxAndRadiusKernel_illegalLoop.dot
-Tue 22:56: ERROR:   Number of loops in Design: 2
-Tue 22:56: ERROR: 
-Tue 22:56: ERROR: Exception Stack Trace com.maxeler.photon.core.PhotonException: 
-Tue 22:56: ERROR:    at com.maxeler.photon.graph_passes.FindIllegalLoops.processNodes(FindIllegalLoops.java:266)
-Tue 22:56: ERROR:    at com.maxeler.photon.core.GraphPassRunner.run(GraphPassRunner.java:459)
-Tue 22:56: ERROR:    at com.maxeler.photon.core.GraphPassRunner.run(GraphPassRunner.java:487)
-Tue 22:56: ERROR:    at com.maxeler.photon.core.PhotonCompileManager.runGraphPass(PhotonCompileManager.java:159)
-Tue 22:56: ERROR:    at com.maxeler.photon.core.PhotonCompileManager.coreCompile(PhotonCompileManager.java:413)
-Tue 22:56: ERROR:    at com.maxeler.photon.compile_managers.SoftwareSimCompileManager.buildBaseSimulation(SoftwareSimCompileManager.java:47)
-Tue 22:56: ERROR:    at com.maxeler.photon.compile_managers.SoftwareSimCompileManager.buildHostDrivenSimulationKernel(SoftwareSimCompileManager.java:75)
-Tue 22:56: ERROR:    at com.maxeler.maxeleros.managercompiler.nodes.WrapperNodePhoton.compileSimulationModel(WrapperNodePhoton.java:259)
-Tue 22:56: ERROR:    at com.maxeler.maxeleros.managercompiler.core.WrapperCompileManager.buildHostCodeSim(WrapperCompileManager.java:311)
-Tue 22:56: ERROR:    at com.maxeler.maxcompiler.v2.managers.custom.CustomManager.buildCPUCodeSim(CustomManager.java:812)
-Tue 22:56: ERROR:    at com.maxeler.maxcompiler.v2.managers.custom.CustomManager.realBuild(CustomManager.java:1468)
-Tue 22:56: ERROR:    at com.maxeler.maxcompiler.v2.managers.DFEManager.build(DFEManager.java:362)
-Tue 22:56: ERROR:    at com.maxeler.maxcompiler.v2.managers.standard.Manager.makeFullManager(Manager.java:1106)
-Tue 22:56: ERROR:    at com.maxeler.maxcompiler.v2.managers.standard.Manager.realBuild(Manager.java:467)
-Tue 22:56: ERROR:    at com.maxeler.maxcompiler.v2.managers.DFEManager.build(DFEManager.java:362)
-Tue 22:56: ERROR:    at ptc.PalmTreeCountingManager.main(PalmTreeCountingManager.maxj:36)
-Tue 22:56: ERROR: ----------------------------
-Tue 22:56: Building: FindWindowMaxAndRadius.max file finished.
-Tue 22:56: Build process failed while trying to create FindWindowMaxAndRadius.max file
-Tue 22:56: null
-Tue 22:56: Build failed: Tue May 23 22:56:16 CST 2017
+Sat 16:46: Compiling Engine Code.
+Sat 16:46: Building FindWindowMaxAndRadius.max file. 
+Sat 16:46: Setting environment variable:
+Sat 16:46: MAXCOMPILER_BUILD_DIR : /home/rice/projects/PTC/RunRules/Simulation/maxfiles
+Sat 16:46: MAX_BUILDPARAMS : DFEModel='MAIA' target='DFE_SIM' maxFileName='FindWindowMaxAndRadius'  
+Sat 16:46: Building output:
+Sat 16:46: MaxCompiler version: 2015.1.1
+Sat 16:46: Build "FindWindowMaxAndRadius" start time: Sat May 27 16:46:45 CST 2017
+Sat 16:46: Main build process running as user rice on host conghui.wxsc.com
+Sat 16:46: Build location: /home/rice/projects/PTC/RunRules/Simulation/maxfiles/FindWindowMaxAndRadius_MAIA_DFE_SIM
+Sat 16:46: Detailed build log available in "_build.log"
+Sat 16:46: Instantiating manager
+Sat 16:46: Instantiating kernel "FindWindowMaxAndRadiusKernel"
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: a width: 42
+Sat 16:46: Compiling manager (CPU I/O Only)
+Sat 16:46: 
+Sat 16:46: Compiling kernel "FindWindowMaxAndRadiusKernel"
+Sat 16:46: WARNING: Warning (UNCONNECTED_DESIGN_ELEMENT):
+Sat 16:46: WARNING: Unconnected elements in design 'FindWindowMaxAndRadiusKernel'
+Sat 16:46: WARNING: details in : /home/rice/projects/PTC/RunRules/Simulation/maxfiles/FindWindowMaxAndRadius_MAIA_DFE_SIM/scratch/FindWindowMaxAndRadiusKernel_graph_warnings.txt
+Sat 16:46: Running back-end simulation build (3 phases)
+Sat 16:46: (1/3) - Prepare MaxFile Data (GenerateMaxFileDataFile)
+Sat 16:46: (2/3) - Compile Simulation Modules (SimCompilePass)
+Sat 16:46: (3/3) - Generate MaxFile (AddSimObjectToMaxFilePass)
+Sat 16:46: MaxFile: /home/rice/projects/PTC/RunRules/Simulation/maxfiles/FindWindowMaxAndRadius_MAIA_DFE_SIM/results/FindWindowMaxAndRadius.max (MD5Sum: a34534d4dc5fe304b06c908bcb8a5ed6)
+Sat 16:46: Build completed: Sat May 27 16:46:51 CST 2017 (took 5 secs)
+Sat 16:46: Executing command:
+Sat 16:46: cp /home/rice/projects/PTC/RunRules/Simulation/maxfiles/FindWindowMaxAndRadius.h /home/rice/projects/PTC/RunRules/Simulation/include/FindWindowMaxAndRadius.h 
+Sat 16:46: Command output:
+Sat 16:46: Building: FindWindowMaxAndRadius.max file finished.
+Sat 16:46: Engine build finished.
+Sat 16:46: Compiling CPU Code.
+Sat 16:46: Run CPU project make files updating
+Sat 16:46: Executing command:
+Sat 16:46: java -jar /opt/maxcompiler-2015.1.1/lib/MaxIDE/projectAdmin.jar -u /home/rice/projects/PTC Simulation 
+Sat 16:46: Command output:
+
+Sat 16:46: MaxCompiler Project Admin Tool Version 2015.1.10001
+Sat 16:46:  Copyright Maxeler Technologies 2010 - 2015. All rights reserved.
+Sat 16:46: Handler version 2
+Sat 16:46: Updating RunRule dependent Makefiles for RunRule 'Simulation'
+Sat 16:46: 	Updating: Simulation
+Sat 16:46: Found makefiles: 1
+Sat 16:46: 	Updated: Simulation
+Sat 16:46: Run CPU make.
+Sat 16:46: make RUNRULE=Simulation 
+Sat 16:46: Command output:
+Sat 16:46: make -f Makefile.rules build
+Sat 16:46: make[1]: Entering directory `/home/rice/projects/PTC/CPUCode'
+Sat 16:46: set -e; rm -f ../RunRules/Simulation/objects/c/main.d ;                                                             \
+Sat 16:46: 	  cc -M -std=gnu99 -g -O3 -Wall -Wextra -I../RunRules/Simulation/include  -I '/opt/maxcompiler-2015.1.1/include/slic'  -Wno-error main.c > ../RunRules/Simulation/objects/c/main.d.$$ ;                                 \
+Sat 16:46:       sed 's,\(main\)\.o[ :]*,../RunRules/Simulation/objects/c/\1.o ../RunRules/Simulation/objects/c/main.d : ,g' < ../RunRules/Simulation/objects/c/main.d.$$ > ../RunRules/Simulation/objects/c/main.d; \
+Sat 16:46:       rm -f ../RunRules/Simulation/objects/c/main.d.$$
+Sat 16:46: make[1]: Leaving directory `/home/rice/projects/PTC/CPUCode'
+Sat 16:46: make[1]: Entering directory `/home/rice/projects/PTC/CPUCode'
+Sat 16:46: "/opt/maxcompiler-2015.1.1/bin/sliccompile" ../RunRules/Simulation/maxfiles/FindWindowMaxAndRadius.max ../RunRules/Simulation/objects/maxfiles/slic_FindWindowMaxAndRadius.o
+Sat 16:46: Processing maxfile for MAIA_SIM from '../RunRules/Simulation/maxfiles/FindWindowMaxAndRadius.max'.
+Sat 16:46: gcc -std=gnu99 -Wall -Werror -fno-guess-branch-probability -frandom-seed=foo -Wno-unused-variable -Wno-unused-function -fPIC -I /opt/maxcompiler-2015.1.1/include/slic -DMAXFILE_INC="/home/rice/projects/PTC/CPUCode/../RunRules/Simulation/maxfiles/FindWindowMaxAndRadius.max" -DSLIC_NO_DESTRUCTORS -c /opt/maxcompiler-2015.1.1/src/slicinterface/MaxFileInit.c -o slic_FindWindowMaxAndRadius.o 
+Sat 16:46: Copying .max file C object into '/home/rice/projects/PTC/CPUCode/../RunRules/Simulation/objects/maxfiles'
+Sat 16:46: cc -std=gnu99 -g -O3 -Wall -Wextra -I../RunRules/Simulation/include  -I '/opt/maxcompiler-2015.1.1/include/slic'  -c main.c -o ../RunRules/Simulation/objects/c/main.o
+Sat 16:46: cc -std=gnu99 -g -O3 -Wall -Wextra -I../RunRules/Simulation/include  -I '/opt/maxcompiler-2015.1.1/include/slic'  -o ../RunRules/Simulation/binaries/ptc ../RunRules/Simulation/objects/maxfiles/slic_FindWindowMaxAndRadius.o ../RunRules/Simulation/objects/c/main.o -g -O3  -L '/opt/maxcompiler-2015.1.1/lib' -lslic -L '/opt/maxcompiler-2015.1.1/lib/maxeleros-sim/lib' -lmaxeleros -lpthread -lm -lrt 
+Sat 16:46: make[1]: Leaving directory `/home/rice/projects/PTC/CPUCode'
+Sat 16:46: Build completed: Sat May 27 16:46:53 CST 2017
 
 
+Sat 16:46: ########################################## 
+Sat 16:46: Running
+Sat 16:46: ########################################## 
+Sat 16:46: Executing command:
+Sat 16:46: '/home/rice/projects/PTC/RunRules/Simulation/binaries/ptc' 
+Sat 16:46: Command output:
+Sat 16:46: Generate test input data
+Sat 16:46:    359   966   105   115    81   255    74   236   809   205   186   939
+Sat 16:46:    498   763   483   326   124   706    84  1016   795   488   487   909
+Sat 16:46:    886   346   302   611   563   927   201   922   870   306    13   951
+Sat 16:46:    561    88   163   346   293   349   261   791    88   745    94   212
+Sat 16:46:    427   178   205   198   667   692    84   529    14   386   116   577
+Sat 16:46:    289   317   476   135   624   489    62   161   577   225   508   871
+Sat 16:46:    574   769   638   663   490   732   875   918   911    56    92   554
+Sat 16:46:    748   176    59   763   562   175   316   852   492   792   987    92
+Sat 16:46:    258    26   254   835   251   762   682   826   507   297   465   998
+
+Sat 16:46: search window max
+Sat 16:46: windowMax: 966, row: 0, col: 1
+Sat 16:46: windowMax: 927, row: 2, col: 5
+Sat 16:46: windowMax: 1016, row: 1, col: 7
+Sat 16:46: windowMax: 951, row: 2, col: 11
+Sat 16:46: windowMax: 561, row: 3, col: 0
+Sat 16:46: windowMax: 692, row: 4, col: 5
+Sat 16:46: windowMax: 791, row: 3, col: 7
+Sat 16:46: windowMax: 871, row: 5, col: 11
+Sat 16:46: windowMax: 769, row: 6, col: 1
+Sat 16:46: windowMax: 835, row: 8, col: 3
+Sat 16:46: windowMax: 918, row: 6, col: 7
+Sat 16:46: windowMax: 998, row: 8, col: 11
+Sat 16:46:    966   927  1016   951
+Sat 16:46:    561   692   791   871
+Sat 16:46:    769   835   918   998
+
+Sat 16:46: calculate mean radius
+Sat 16:46: CPU pixel: 667, East(608, 2), West(469, 1), South(311, 4), North(439, 3), NE(815, 4.23), NW(461, 4.23), SE(386, 2.82), SW(532, 1.41), meanRadius: 2.84
+Sat 16:46: CPU pixel: 692, East(608, 1), West(469, 2), South(587, 4), North(578, 2), NE(661, 2.82), NW(483, 5.64), SE(856, 2.82), SW(604, 4.23), meanRadius: 3.06
+Sat 16:46: CPU pixel: 84, East(515, 2), West(608, 1), South(813, 2), North(177, 1), NE(707, 1.41), NW(265, 1.41), SE(750, 2.82), SW(509, 5.64), meanRadius: 2.16
+Sat 16:46: CPU pixel: 529, East(515, 1), West(608, 2), South(757, 2), North(780, 4), NE(452, 5.64), NW(803, 4.23), SE(931, 4.23), SW(670, 2.82), meanRadius: 3.24
+Sat 16:46: Running DFE
+Sat 16:46: windowMax[0]: 966, row: 0, col: 1
+Sat 16:46: windowMax[1]: 927, row: 2, col: 5
+Sat 16:46: windowMax[2]: 1016, row: 1, col: 7
+Sat 16:46: windowMax[3]: 951, row: 2, col: 11
+Sat 16:46: radiusSum: 284
+Sat 16:46: pixel: 667, East(608, 200), West(469, 100), South(311, 400), North(439, 300), NE(815, 423), NW(461, 423), SE(386, 282), SW(532, 141)
+Sat 16:46: radiusSum: 306
+Sat 16:46: pixel: 692, East(608, 100), West(469, 200), South(587, 400), North(578, 200), NE(661, 282), NW(483, 564), SE(856, 282), SW(604, 423)
+Sat 16:46: radiusSum: 216
+Sat 16:46: pixel: 84, East(515, 200), West(608, 100), South(813, 200), North(177, 100), NE(707, 141), NW(265, 141), SE(750, 282), SW(509, 564)
+Sat 16:46: radiusSum: 324
+Sat 16:46: pixel: 529, East(515, 100), West(608, 200), South(757, 200), North(780, 400), NE(452, 564), NW(803, 423), SE(931, 423), SW(670, 282)
+Sat 16:46: windowMax[0]: 561, row: 3, col: 0
+Sat 16:46: windowMax[1]: 692, row: 4, col: 5
+Sat 16:46: windowMax[2]: 791, row: 3, col: 7
+Sat 16:46: windowMax[3]: 871, row: 5, col: 11
+Sat 16:46: windowMax[0]: 769, row: 6, col: 1
+Sat 16:46: windowMax[1]: 835, row: 8, col: 3
+Sat 16:46: windowMax[2]: 918, row: 6, col: 7
+Sat 16:46: windowMax[3]: 998, row: 8, col: 11
+Sat 16:46: Process terminated with exit code 0.

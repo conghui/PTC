@@ -84,6 +84,10 @@ void calMeanRadius(const int *data, int nrow, int ncol, int radius) {
 			int maxWestDiffRadius = 0;
 			int south[2] = {0};
 			int north[2] = {0};
+			float NE[2] = {0}; // northeast
+			float NW[2] = {0}; // northwest
+			float SE[2] = {0}; // southeast
+			float SW[2] = {0}; // southwest
 			for (d = 0; d < radius; d++) {
 				/// east
 				int diff = abs(data[r*ncol+(c+d+1)] - data[r*ncol+(c+d)]);
@@ -106,17 +110,47 @@ void calMeanRadius(const int *data, int nrow, int ncol, int radius) {
 					south[1] = d + 1;
 				}
 
+				// north
 				diff = abs(data[(r-d-1)*ncol+c] - data[(r-d)*ncol +c]);
 				if (north[0] < diff) {
 					north[0] = diff;
 					north[1] = d + 1;
 				}
+
+				// northeast
+				diff = abs(data[(r-d-1)*ncol+(c+d+1)] - data[(r-d)*ncol+(c+d)]);
+				if (NE[0] < diff) {
+					NE[0] = diff;
+					NE[1] = (d+1)*1.41;
+				}
+
+				// northwest
+				diff = abs(data[(r-d-1)*ncol+(c-d-1)] - data[(r-d)*ncol+(c-d)]);
+				if (NW[0] < diff) {
+					NW[0] = diff;
+					NW[1] = (d+1)*1.41;
+				}
+
+				// southeast
+				diff = abs(data[(r+d+1)*ncol+(c+d+1)] - data[(r+d)*ncol+(c+d)]);
+				if (SE[0] < diff) {
+					SE[0] = diff;
+					SE[1] = (d+1)*1.41;
+				}
+
+				// southwest
+				diff = abs(data[(r+d+1)*ncol+(c-d-1)] - data[(r+d)*ncol+(c-d)]);
+				if (SW[0] < diff) {
+					SW[0] = diff;
+					SW[1] = (d+1)*1.41;
+				}
 			}
+			float meanRadius = (maxEastDiffRadius + maxWestDiffRadius + south[1] + north[1] + NE[1] + NW[1] + SE[1] + SW[1]) / 8;
 //			printf("pixel: %d, eastDiff: %d, maxDiffRadius: %d, row: %d, col: %d\n", data[r*ncol+(c)], diffEastMax, maxEastDiffRadius, r, c);
-			printf("CPU pixel: %d, East(%d, %d), West(%d, %d), South(%d, %d), North(%d, %d)\n", data[r*ncol+(c)],
+			printf("CPU pixel: %d, East(%d, %d), West(%d, %d), South(%d, %d), North(%d, %d), NE(%.0f, %.2f), NW(%.0f, %.2f), SE(%.0f, %.2f), SW(%.0f, %.2f), meanRadius: %.2f\n", data[r*ncol+(c)],
 					diffEastMax, maxEastDiffRadius,
 					diffWestMax, maxWestDiffRadius,
-					south[0], south[1], north[0], north[1]
+					south[0], south[1], north[0], north[1], NE[0], NE[1], NW[0], NW[1], SE[0], SE[1], SW[0], SW[1], meanRadius
 					);
 
 		}

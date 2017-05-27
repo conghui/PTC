@@ -73,17 +73,25 @@ class FindWindowMaxAndRadiusKernel extends Kernel {
 
 		//////////////////////////////// find the maximal radius ////////////////
 
-		List<DFEVar> maxInfo = calMeanRadius(pixel);
+		List<DFEVar> maxInfo = calMeanRadius(pixel, withinRegion(imageCordRowIdx, imageCordColIdx));
 		DFEStruct eastMaxInfo = new DiffRadiusType().unpack(maxInfo.get(0));
 		DFEStruct westMaxInfo = new DiffRadiusType().unpack(maxInfo.get(1));
 		DFEStruct southMaxInfo = new DiffRadiusType().unpack(maxInfo.get(2));
 		DFEStruct northMaxInfo = new DiffRadiusType().unpack(maxInfo.get(3));
+		DFEStruct NEMaxInfo = new DiffRadiusType().unpack(maxInfo.get(4));
+		DFEStruct NWMaxInfo = new DiffRadiusType().unpack(maxInfo.get(5));
+		DFEStruct SEMaxInfo = new DiffRadiusType().unpack(maxInfo.get(6));
+		DFEStruct SWMaxInfo = new DiffRadiusType().unpack(maxInfo.get(7));
 		debug.simPrintf(withinRegion(imageCordRowIdx, imageCordColIdx),
-				"pixel: %d, East(%d, %d), West(%d, %d), South(%d, %d), North(%d, %d)\n",pixel,
+				"pixel: %d, East(%d, %d), West(%d, %d), South(%d, %d), North(%d, %d), NE(%d, %d), NW(%d, %d), SE(%d, %d), SW(%d, %d)\n",pixel,
 				eastMaxInfo[DiffRadiusType.diffValue], eastMaxInfo[DiffRadiusType.radius],
 				westMaxInfo[DiffRadiusType.diffValue], westMaxInfo[DiffRadiusType.radius],
 				southMaxInfo[DiffRadiusType.diffValue], southMaxInfo[DiffRadiusType.radius],
-				northMaxInfo[DiffRadiusType.diffValue], northMaxInfo[DiffRadiusType.radius]
+				northMaxInfo[DiffRadiusType.diffValue], northMaxInfo[DiffRadiusType.radius],
+				NEMaxInfo[DiffRadiusType.diffValue], NEMaxInfo[DiffRadiusType.radius],
+				NWMaxInfo[DiffRadiusType.diffValue], NWMaxInfo[DiffRadiusType.radius],
+				SEMaxInfo[DiffRadiusType.diffValue], SEMaxInfo[DiffRadiusType.radius],
+				SWMaxInfo[DiffRadiusType.diffValue], SWMaxInfo[DiffRadiusType.radius]
 				);
 
 		io.output("output", pixelType) <== pixel;
@@ -131,6 +139,15 @@ class FindWindowMaxAndRadiusKernel extends Kernel {
 			DFEVar value_b = type.unpack(b)[DiffRadiusType.diffValue];
 
 			return value_a > value_b ? a : b;
+		}
+
+	}
+
+	private static class Add implements AssociativeOp<DFEVar> {
+
+		@Override
+		public DFEVar op(DFEVar a, DFEVar b) {
+			return a + b;
 		}
 
 	}
@@ -214,23 +231,99 @@ class FindWindowMaxAndRadiusKernel extends Kernel {
 		return calMaxDiffAlongDirection(dist, offsets, radius);
 	}
 
+	/**
+	 * calculate the maximal difference of two adjacent pixel along northeast direction
+	 * @param pixel pixel of current cycle
+	 * @param radius radius (multiplied by 100) along northeast direction. Usually 0, 141, 282, 423...
+	 * @return the value is represented as DiffRadiusType.pack()
+	 */
+	private DFEVar calMaxDiffNorthEast(DFEVar pixel, int[] radiusDiagnal) {
+		int [] offsets = new int[Constant.MAX_CIRCLE_RADIUS];
+		int nextStride = (Constant.NUM_PIXEL_IN_IMAGE_ROW - 1);
+		for (int i = 0; i < offsets.length; i++) {
+			offsets[i] = -i * nextStride;
+		}
+		DFEVar dist = KernelMath.abs(stream.offset(pixel, -nextStride) - pixel);
+		return calMaxDiffAlongDirection(dist, offsets, radiusDiagnal);
+	}
 
-	private List<DFEVar> calMeanRadius(DFEVar pixel) {
+	/**
+	 * calculate the maximal difference of two adjacent pixel along northwest direction
+	 * @param pixel pixel of current cycle
+	 * @param radius radius (multiplied by 100) along northwest direction. Usually 0, 141, 282, 423...
+	 * @return the value is represented as DiffRadiusType.pack()
+	 */
+	private DFEVar calMaxDiffNorthWest(DFEVar pixel, int[] radiusDiagnal) {
+		int [] offsets = new int[Constant.MAX_CIRCLE_RADIUS];
+		int nextStride = (Constant.NUM_PIXEL_IN_IMAGE_ROW + 1);
+		for (int i = 0; i < offsets.length; i++) {
+			offsets[i] = -i * nextStride;
+		}
+		DFEVar dist = KernelMath.abs(stream.offset(pixel, -nextStride) - pixel);
+		return calMaxDiffAlongDirection(dist, offsets, radiusDiagnal);
+	}
+
+	/**
+	 * calculate the maximal difference of two adjacent pixel along southeast direction
+	 * @param pixel pixel of current cycle
+	 * @param radius radius (multiplied by 100) along southeast direction. Usually 0, 141, 282, 423...
+	 * @return the value is represented as DiffRadiusType.pack()
+	 */
+	private DFEVar calMaxDiffSouthEast(DFEVar pixel, int[] radiusDiagnal) {
+		int [] offsets = new int[Constant.MAX_CIRCLE_RADIUS];
+		int nextStride = (Constant.NUM_PIXEL_IN_IMAGE_ROW + 1);
+		for (int i = 0; i < offsets.length; i++) {
+			offsets[i] = i * nextStride;
+		}
+		DFEVar dist = KernelMath.abs(stream.offset(pixel, nextStride) - pixel);
+		return calMaxDiffAlongDirection(dist, offsets, radiusDiagnal);
+	}
+
+	/**
+	 * calculate the maximal difference of two adjacent pixel along sourthwest direction
+	 * @param pixel pixel of current cycle
+	 * @param radius radius (multiplied by 100) along sourthwest direction. Usually 0, 141, 282, 423...
+	 * @return the value is represented as DiffRadiusType.pack()
+	 */
+	private DFEVar calMaxDiffSouthWest(DFEVar pixel, int[] radiusDiagnal) {
+		int [] offsets = new int[Constant.MAX_CIRCLE_RADIUS];
+		int nextStride = (Constant.NUM_PIXEL_IN_IMAGE_ROW - 1);
+		for (int i = 0; i < offsets.length; i++) {
+			offsets[i] = i * nextStride;
+		}
+		DFEVar dist = KernelMath.abs(stream.offset(pixel, nextStride) - pixel);
+		return calMaxDiffAlongDirection(dist, offsets, radiusDiagnal);
+	}
+
+	private List<DFEVar> calMeanRadius(DFEVar pixel, DFEVar debugEnable) {
 		/// radius for east, west, north, south
 		int[] radius = new int[Constant.MAX_CIRCLE_RADIUS];
+		int [] radiusDiagnal = radius.clone();
 		for (int i = 0; i < Constant.MAX_CIRCLE_RADIUS; i++) {
 			radius[i] = (i+1)*100;
+			radiusDiagnal[i] = (i+1)*141;	//// (i+1) * sqrt(2) * 100
 		}
 
-		List<DFEVar> maxRadiusInCircle = new ArrayList<DFEVar>();
+		List<DFEVar> maxInfoInCircle = new ArrayList<DFEVar>();
 
 		//// east direction
-		maxRadiusInCircle.add(calMaxDiffEast(pixel, radius));	/// east
-		maxRadiusInCircle.add(calMaxDiffWest(pixel, radius));	/// west
-		maxRadiusInCircle.add(calMaxDiffSouth(pixel, radius));	/// south
-		maxRadiusInCircle.add(calMaxDiffNorth(pixel, radius)); 	/// north
+		maxInfoInCircle.add(calMaxDiffEast(pixel, radius));	/// east
+		maxInfoInCircle.add(calMaxDiffWest(pixel, radius));	/// west
+		maxInfoInCircle.add(calMaxDiffSouth(pixel, radius));	/// south
+		maxInfoInCircle.add(calMaxDiffNorth(pixel, radius)); 	/// north
+		maxInfoInCircle.add(calMaxDiffNorthEast(pixel, radiusDiagnal)); /// northeast
+		maxInfoInCircle.add(calMaxDiffNorthWest(pixel, radiusDiagnal)); /// northwest
+		maxInfoInCircle.add(calMaxDiffSouthEast(pixel, radiusDiagnal)); /// southeast
+		maxInfoInCircle.add(calMaxDiffSouthWest(pixel, radiusDiagnal)); /// southwest
 
-		return maxRadiusInCircle;
+		List<DFEVar> maxRadiusInCircle = new ArrayList<DFEVar>();
+		for (DFEVar info : maxInfoInCircle) {
+			DFEType summationType = dfeUInt(16);
+			maxRadiusInCircle.add(getRadius(info).cast(summationType));
+		}
+		DFEVar radiusMean = TreeReduce.reduce(new Add(), maxRadiusInCircle) / maxRadiusInCircle.size();
+		debug.simPrintf(debugEnable, "radiusMean: %d\n", radiusMean);
+		return maxInfoInCircle;
 
 	}
 
