@@ -27,7 +27,7 @@ import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStructType;
 import com.maxeler.maxcompiler.v2.utils.MathUtils;
 
 class FindWindowMaxAndRadiusKernel extends Kernel {
-
+	private static final boolean DEBUG_ENABLE = false;
 	private static DFEType pixelType = Type.pixelType;
 	private final  CoordRadiusType coordRadiusType = new CoordRadiusType();
 	private final WinMaxCoordRadiusType winmaxCoordRadiusType = new WinMaxCoordRadiusType();
@@ -108,13 +108,13 @@ class FindWindowMaxAndRadiusKernel extends Kernel {
 				).getCount();
 
 		DFEStruct outData = control.mux(outputCounter, winMaxCoordRadiusList);
-		debug.simPrintf(isOutputWindowMax, "output:: winMax: %d, cord(%d, %d), radius: %d\n",
+		printf(isOutputWindowMax, "output:: winMax: %d, cord(%d, %d), radius: %d\n",
 				outData[WinMaxCoordRadiusType.maxPixel],
 				outData[WinMaxCoordRadiusType.maxCoordRowIdx],
 				outData[WinMaxCoordRadiusType.maxCoordColIdx],
 				outData[WinMaxCoordRadiusType.meanRadius]);
 
-		io.output("output", pixelType) <== pixel;
+		io.output("output", outData.getType(), isOutputWindowMax) <== outData;
 	}
 
 
@@ -136,7 +136,6 @@ class FindWindowMaxAndRadiusKernel extends Kernel {
 		@Override
 		public DFEVar op(DFEVar a, DFEVar b) {
 			DiffRadiusType type = new DiffRadiusType();
-			System.out.println("a width: " + a.getType().getTotalBits());
 			DFEVar value_a = type.unpack(a)[DiffRadiusType.diffValue];
 			DFEVar value_b = type.unpack(b)[DiffRadiusType.diffValue];
 
@@ -303,7 +302,7 @@ class FindWindowMaxAndRadiusKernel extends Kernel {
 		DFEStruct NWMaxInfo = new DiffRadiusType().unpack(maxInfoInCircle.get(5));
 		DFEStruct SEMaxInfo = new DiffRadiusType().unpack(maxInfoInCircle.get(6));
 		DFEStruct SWMaxInfo = new DiffRadiusType().unpack(maxInfoInCircle.get(7));
-		debug.simPrintf(debugEnable,
+		printf(debugEnable,
 				"pixel: %d, East(%d, %d), West(%d, %d), South(%d, %d), North(%d, %d), NE(%d, %d), NW(%d, %d), SE(%d, %d), SW(%d, %d), meanRadius: %d\n",pixel,
 				eastMaxInfo[DiffRadiusType.diffValue], eastMaxInfo[DiffRadiusType.radius],
 				westMaxInfo[DiffRadiusType.diffValue], westMaxInfo[DiffRadiusType.radius],
@@ -325,5 +324,11 @@ class FindWindowMaxAndRadiusKernel extends Kernel {
 		rowIdx < Constant.NUM_PIXEL_IN_IMAGE_COL - Constant.MAX_CIRCLE_RADIUS &
 		colIdx >= Constant.MAX_CIRCLE_RADIUS &
 		colIdx < Constant.NUM_PIXEL_IN_IMAGE_ROW - Constant.MAX_CIRCLE_RADIUS;
+	}
+
+	private void printf(DFEVar condition, String format, Object...args ) {
+		if (DEBUG_ENABLE) {
+			debug.simPrintf(condition, "[" + this.getName() + "]:" + format, args);
+		}
 	}
 }

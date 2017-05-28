@@ -164,7 +164,7 @@ int main()
 	const int windowLength = 3;	/// window is square
 	const int windowRow = imageRow / windowLength;
 	const int windowCol = imageCol / windowLength;
-	const int maxRadius = 4;
+	const int maxRadius = 3;
 
 	int *inputImage = malloc(imageCol * imageRow * sizeof *inputImage);
 	assert(inputImage);
@@ -190,13 +190,8 @@ int main()
 	printf("Running DFE\n");
 	FindWindowMaxAndRadius(imageRow * imageCol, inputImage, d_windowMax);
 
-//	printf("print d_windowMax\n");
-//	print2D(d_windowMax, imageRow, imageCol);
-//	FindWindowMaxAndRadius(8, coeffs, dataIn, dataOut);
-//
-//	for (int i = 1; i < 7; i++) // Ignore edge values
-//		printf("dataOut[%d] = %f\n", i, dataOut[i]);
-
+	printf("print d_windowMax\n");
+	print2D(d_windowMax, imageRow, imageCol);
 
 	free(inputImage);
 	free(windowMax);

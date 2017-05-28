@@ -11,29 +11,41 @@
 package ptc;
 
 import com.maxeler.maxcompiler.v2.build.EngineParameters;
-import com.maxeler.maxcompiler.v2.kernelcompiler.Kernel;
+import com.maxeler.maxcompiler.v2.managers.custom.CustomManager;
+import com.maxeler.maxcompiler.v2.managers.custom.blocks.Fanout;
+import com.maxeler.maxcompiler.v2.managers.custom.blocks.KernelBlock;
 import com.maxeler.maxcompiler.v2.managers.engine_interfaces.CPUTypes;
 import com.maxeler.maxcompiler.v2.managers.engine_interfaces.EngineInterface;
 import com.maxeler.maxcompiler.v2.managers.engine_interfaces.InterfaceParam;
-import com.maxeler.maxcompiler.v2.managers.standard.Manager;
-import com.maxeler.maxcompiler.v2.managers.standard.Manager.IOType;
 
-class PalmTreeCountingManager {
-
+class PalmTreeCountingManager extends CustomManager {
 	static final int maxWindowSize = 9;
 	static final float defaultWeight = 1.0f;
+
+	public PalmTreeCountingManager(EngineParameters engineParams) {
+		super(engineParams);
+
+		KernelBlock findWinMaxRadiusKernel = addKernel(new FindWindowMaxAndRadiusKernel(
+				makeKernelParameters("FindWindowMaxAndRadiusKernel")));
+		KernelBlock kernel2 = addKernel(new DetermineWindowMaxPixelKernel(
+				makeKernelParameters("DetermineWindowMaxPixelKernel")));
+
+
+		Fanout imageInputFanout = fanout("imageInputFanout");
+		imageInputFanout.getInput() <== addStreamFromCPU("imageInput");
+		findWinMaxRadiusKernel.getInput("imageInput") <== imageInputFanout.addOutput("tofindWinMaxRadiusKernel");
+
+		kernel2.getInput("coordRadius") <== findWinMaxRadiusKernel.getOutput("output");
+		kernel2.getInput("pixel") <== imageInputFanout.addOutput("toDetermineWindowMaxPixelKernel");
+		addStreamToCPU("output") <== kernel2.getOutput("output");
+	}
+
 
 	public static void main(String[] args) {
 		validate();
 		EngineParameters params = new EngineParameters(args);
-		Manager manager = new Manager(params);
-		Kernel kernel = new FindWindowMaxAndRadiusKernel(
-				manager.makeKernelParameters());
-//		manager.addMaxFileConstant("maxWindowSize", maxWindowSize);
-		manager.setKernel(kernel);
-		manager.setIO(IOType.ALL_CPU);
+		PalmTreeCountingManager manager = new PalmTreeCountingManager(params);
 		manager.createSLiCinterface(interfaceDefault());
-//		manager.createSLiCinterface(interfaceVariable());
 		manager.build();
 	}
 
@@ -47,10 +59,13 @@ class PalmTreeCountingManager {
 //		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight1", defaultWeight);
 //		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight2", defaultWeight);
 		ei.setTicks("FindWindowMaxAndRadiusKernel", imageSize);
+		ei.setTicks("DetermineWindowMaxPixelKernel", imageSize);
 
 		CPUTypes pixelType = CPUTypes.INT32;
 		ei.setStream("imageInput", pixelType, imageSize * pixelType.sizeInBytes());
 		ei.setStream("output", pixelType, imageSize * pixelType.sizeInBytes());
+//		ei.ignoreAll(Direction.IN_OUT);
+		ei.route("imageInputFanout -> tofindWinMaxRadiusKernel, imageInputFanout -> toDetermineWindowMaxPixelKernel");
 		return ei;
 	}
 

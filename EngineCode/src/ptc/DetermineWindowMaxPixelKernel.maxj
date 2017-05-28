@@ -1,0 +1,42 @@
+package ptc;
+
+import com.maxeler.maxcompiler.v2.kernelcompiler.Kernel;
+import com.maxeler.maxcompiler.v2.kernelcompiler.KernelParameters;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStruct;
+
+public class DetermineWindowMaxPixelKernel extends Kernel {
+	private static final boolean DEBUG_ENABLE = true;
+	private final WinMaxCoordRadiusType winmaxCoordRadiusType = new WinMaxCoordRadiusType();
+
+	public DetermineWindowMaxPixelKernel(KernelParameters parameters) {
+		super(parameters);
+		DFEVar cycleCounter = control.count.simpleCounter(32);
+
+		DFEVar pixel = io.input("pixel", Type.pixelType);
+
+		DFEVar oldEvenCounter = control.count.simpleCounter(1);
+		DFEStruct maxCoordRadius = io.input("coordRadius", winmaxCoordRadiusType, ~oldEvenCounter);
+
+
+		io.output("output", Type.pixelType) <== pixel;
+
+		DFEVar max = maxCoordRadius[WinMaxCoordRadiusType.maxPixel];
+		printf("count: %d, pixel: %d, max: %d, max[-1]: %d, max[-2]: %d\n",
+				cycleCounter, pixel, max,
+				stream.offset(max, -1), stream.offset(max, -2));
+	}
+
+	private void printf(DFEVar condition, String format, Object...args ) {
+		if (DEBUG_ENABLE) {
+			debug.simPrintf(condition, "[" + this.getName() + "]:" + format, args);
+		}
+	}
+
+	private void printf(String format, Object...args ) {
+		if (DEBUG_ENABLE) {
+			debug.simPrintf(constant.var(true), "[" + this.getName() + "]:" + format, args);
+		}
+	}
+
+}
