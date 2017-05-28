@@ -21,7 +21,6 @@ import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.KernelMath;
 import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.Reductions;
 import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.CounterChain;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEType;
-import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFETypeFactory;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStruct;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStructType;
@@ -30,6 +29,8 @@ import com.maxeler.maxcompiler.v2.utils.MathUtils;
 class FindWindowMaxAndRadiusKernel extends Kernel {
 
 	private static DFEType pixelType = Type.pixelType;
+	private final  CoordRadiusType coordRadiusType = new CoordRadiusType();
+	private final WinMaxCoordRadiusType winmaxCoordRadiusType = new WinMaxCoordRadiusType();
 	private final DFEVar imageCordRowIdx;	/// slow dimension
 	private final DFEVar imageCordColIdx; 	/// fast dimension
 
@@ -44,16 +45,9 @@ class FindWindowMaxAndRadiusKernel extends Kernel {
 				MathUtils.bitsToAddress(Constant.NUM_PIXEL_IN_IMAGE_ROW),
 				Constant.NUM_PIXEL_IN_IMAGE_ROW);
 
-		/// output condition
+
 		int numPixelInWindowStride = Constant.NUM_PIXEL_IN_IMAGE_ROW * Constant.NUM_PIXEL_IN_WINDOW_COL;
-		int numPixelInWindowStrideExceptLastRow = numPixelInWindowStride - Constant.NUM_PIXEL_IN_IMAGE_ROW;
-		DFEVar isOutputRow = KernelMath.modulo(cycleCounter, numPixelInWindowStride) >= numPixelInWindowStrideExceptLastRow;
-		DFEVar lastRowInWindowCount = control.count.makeCounter(
-				control.count.makeParams(MathUtils.bitsToAddress(Constant.NUM_PIXEL_IN_WINDOW_ROW))
-				.withEnable(isOutputRow)
-				.withMax(Constant.NUM_PIXEL_IN_WINDOW_ROW)
-				).getCount();
-		DFEVar isOutputWindowMax = lastRowInWindowCount === Constant.NUM_PIXEL_IN_WINDOW_ROW - 1;
+
 
 		DFEVar pixelInWindowStrideCounter = control.count.simpleCounter(
 				MathUtils.bitsToAddress(numPixelInWindowStride),
@@ -64,36 +58,63 @@ class FindWindowMaxAndRadiusKernel extends Kernel {
 		imageCordRowIdx = imageCordCounterChain.addCounter(Constant.NUM_PIXEL_IN_IMAGE_COL, 1); /// slow dimension
 		imageCordColIdx = imageCordCounterChain.addCounter(Constant.NUM_PIXEL_IN_IMAGE_ROW, 1); /// fast dimension
 
-		Reductions.StreamMaxInfo[] windowMax = new Reductions.StreamMaxInfo[Constant.NUM_WINDOW_IN_IMAGE_ROW];
-		for (int i = 0; i < windowMax.length; i++) {
-			DFEVar cord = imageCordColIdx # imageCordRowIdx;
-			DFEVar reset = pixelInWindowStrideCounter === i * Constant.NUM_PIXEL_IN_WINDOW_ROW;
-			DFEVar enable = KernelMath.divMod(imageRowCounter, constant.var(imageRowCounter.getType(),
-					Constant.NUM_PIXEL_IN_WINDOW_ROW)).getQuotient() === i;
-			windowMax[i] = Reductions.streamMaxWithMetadata(pixel, cord, reset, enable);
-		}
-
 		//////////////////////////////// find the average radius ////////////////
 		DFEVar meanRadius = calMeanRadius(pixel, withinRegion(imageCordRowIdx, imageCordColIdx));
 
-		io.output("output", pixelType) <== pixel;
-
-		//////////////////////// DEBUG INFO /////////////////////
-		pixel.simWatch("pixel");
+		Reductions.StreamMaxInfo[] windowMax = new Reductions.StreamMaxInfo[Constant.NUM_WINDOW_IN_IMAGE_ROW];
 		for (int i = 0; i < windowMax.length; i++) {
-			int counterWidth = windowMax[i].getMetaData().getType().getTotalBits() / 2;
-			DFEVar rowIdx = windowMax[i].getMetaData().slice(0, counterWidth).cast(dfeUInt(counterWidth));
-			DFEVar colIdx = windowMax[i].getMetaData().slice(counterWidth, counterWidth).cast(dfeUInt(counterWidth));
-			DFEVar max = windowMax[i].getMax();
-			debug.simPrintf(pixelInWindowStrideCounter === numPixelInWindowStride - 1, "windowMax[%d]: %d, row: %d, col: %d\n", i, max, rowIdx, colIdx);
+			/// save the current coordinate and the mean radius along with the pixel
+			DFEStruct coordRadius = coordRadiusType.newInstance(this);
+			coordRadius[CoordRadiusType.maxCoordColIdx] <== imageCordColIdx;
+			coordRadius[CoordRadiusType.maxCoordRowIdx] <== imageCordRowIdx;
+			coordRadius[CoordRadiusType.meanRadius] <== meanRadius;
+
+			DFEVar metaData = coordRadius.pack();
+			DFEVar reset = pixelInWindowStrideCounter === i * Constant.NUM_PIXEL_IN_WINDOW_ROW;
+			DFEVar enable = KernelMath.divMod(imageRowCounter, constant.var(imageRowCounter.getType(),
+					Constant.NUM_PIXEL_IN_WINDOW_ROW)).getQuotient() === i;
+			windowMax[i] = Reductions.streamMaxWithMetadata(pixel, metaData, reset, enable);
+		}
+
+		ArrayList<DFEStruct> winMaxCoordRadiusList = new ArrayList<DFEStruct>();
+		for (int i = 0; i < windowMax.length; i++) {
+			DFEStruct mcr = winmaxCoordRadiusType.newInstance(this);
+			DFEStruct coordRadius = coordRadiusType.unpack(windowMax[i].getMetaData());
+
+			/// connect the maxPixel, coordinate and radius
+			mcr[WinMaxCoordRadiusType.maxPixel] <== windowMax[i].getMax();
+			mcr[WinMaxCoordRadiusType.maxCoordRowIdx] <== coordRadius[CoordRadiusType.maxCoordRowIdx];
+			mcr[WinMaxCoordRadiusType.maxCoordColIdx] <== coordRadius[CoordRadiusType.maxCoordColIdx];
+			mcr[WinMaxCoordRadiusType.meanRadius] <== coordRadius[CoordRadiusType.meanRadius];
+
+			//// add the to the list
+			winMaxCoordRadiusList.add(mcr);
 		}
 
 
-//		debug.simPrintf("cycle #%04d: pixel %6d, oldMax %6d, newMax: %6d, winMax: %6d, lastRowInWindowCount: %6d\n",
-//				cycleCounter, pixel, oldMax, newMax, winMax, lastRowInWindowCount);
+		/// output condition
+		int numPixelInWindowStrideExceptLastRow = numPixelInWindowStride - Constant.NUM_PIXEL_IN_IMAGE_ROW;
+		DFEVar isOutputRow = KernelMath.modulo(cycleCounter, numPixelInWindowStride) >= numPixelInWindowStrideExceptLastRow;
+		DFEVar lastRowInWindowCount = control.count.makeCounter(
+				control.count.makeParams(MathUtils.bitsToAddress(Constant.NUM_PIXEL_IN_WINDOW_ROW))
+				.withEnable(isOutputRow)
+				.withMax(Constant.NUM_PIXEL_IN_WINDOW_ROW)
+				).getCount();
+		DFEVar isOutputWindowMax = lastRowInWindowCount === Constant.NUM_PIXEL_IN_WINDOW_ROW - 1;
 
-//		debug.simPrintf(isOutputWindowMax, "windowMax: %d\n", winMax);
+		DFEVar outputCounter = control.count.makeCounter(
+				control.count.makeParams(MathUtils.bitsToAddress(windowMax.length))
+				.withEnable(isOutputWindowMax)
+				).getCount();
 
+		DFEStruct outData = control.mux(outputCounter, winMaxCoordRadiusList);
+		debug.simPrintf(isOutputWindowMax, "output:: winMax: %d, cord(%d, %d), radius: %d\n",
+				outData[WinMaxCoordRadiusType.maxPixel],
+				outData[WinMaxCoordRadiusType.maxCoordRowIdx],
+				outData[WinMaxCoordRadiusType.maxCoordColIdx],
+				outData[WinMaxCoordRadiusType.meanRadius]);
+
+		io.output("output", pixelType) <== pixel;
 	}
 
 
@@ -104,11 +125,10 @@ class FindWindowMaxAndRadiusKernel extends Kernel {
 	private static class DiffRadiusType extends DFEStructType {
 		private static String diffValue = "diffValue";
 		private static String radius = "radius";
-		public static DFEType radiusType = DFETypeFactory.dfeUInt(MathUtils.bitsToAddress(
-				Constant.MAX_CIRCLE_RADIUS * 2 * 100));
+
 
 		public DiffRadiusType() {
-			super(sft(diffValue, pixelType),sft(radius, radiusType));
+			super(sft(diffValue, pixelType),sft(radius, Type.radiusType));
 		}
 	}
 
@@ -126,7 +146,6 @@ class FindWindowMaxAndRadiusKernel extends Kernel {
 	}
 
 	private static class Add implements AssociativeOp<DFEVar> {
-
 		@Override
 		public DFEVar op(DFEVar a, DFEVar b) {
 			return a + b;
@@ -141,13 +160,12 @@ class FindWindowMaxAndRadiusKernel extends Kernel {
 
 	private DFEVar calMaxDiffAlongDirection(DFEVar pixel, int stride, int[] radius) {
 		List<DFEVar> distList = new ArrayList<DFEVar>();
-		DFEType radiusType = DiffRadiusType.radiusType;
 		DFEVar dist = KernelMath.abs(stream.offset(pixel, stride) - pixel);
 
 		for (int i = 0; i < Constant.MAX_CIRCLE_RADIUS; i++) {
 			DFEStruct distInfo = new DiffRadiusType().newInstance(this);
 			distInfo[DiffRadiusType.diffValue] <== stream.offset(dist, i * stride);
-			distInfo[DiffRadiusType.radius] <== constant.var(radiusType, radius[i]);
+			distInfo[DiffRadiusType.radius] <== constant.var(Type.radiusType, radius[i]);
 			distList.add(distInfo.pack());
 		}
 
@@ -274,7 +292,7 @@ class FindWindowMaxAndRadiusKernel extends Kernel {
 			maxRadiusInCircle.add(getRadius(info).cast(summationType));
 		}
 		DFEVar radiusMean = TreeReduce.reduce(new Add(), maxRadiusInCircle) / maxRadiusInCircle.size();
-		radiusMean = radiusMean.cast(DiffRadiusType.radiusType);
+		radiusMean = radiusMean.cast(Type.radiusType);
 
 		/////////////// DEBUG INFO //////////////////
 		DFEStruct eastMaxInfo = new DiffRadiusType().unpack(maxInfoInCircle.get(0));

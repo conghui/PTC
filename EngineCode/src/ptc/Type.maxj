@@ -2,7 +2,20 @@ package ptc;
 
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEType;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFETypeFactory;
+import com.maxeler.maxcompiler.v2.utils.MathUtils;
 
 public class Type {
-	static DFEType pixelType = DFETypeFactory.dfeInt(32);
+	public static DFEType pixelType = DFETypeFactory.dfeInt(32);
+
+	public static DFEType imageRowIdxType = DFETypeFactory.dfeUInt(
+			MathUtils.bitsToAddress(Constant.NUM_PIXEL_IN_IMAGE_COL));
+
+	public static DFEType imageColIdxType = DFETypeFactory.dfeUInt(
+			MathUtils.bitsToAddress(Constant.NUM_PIXEL_IN_IMAGE_ROW));
+
+	/**
+	 * radius here is multiplied by 100 to avoid using floating point representation
+	 */
+	public static DFEType radiusType = DFETypeFactory.dfeUInt(
+			MathUtils.bitsToAddress(Constant.MAX_CIRCLE_RADIUS * 2 * 100));
 }

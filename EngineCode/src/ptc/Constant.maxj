@@ -7,5 +7,5 @@ public class Constant {
 	public static final int NUM_WINDOW_IN_IMAGE_COL = 3;
 	public static final int NUM_PIXEL_IN_WINDOW_ROW = 3;
 	public static final int NUM_PIXEL_IN_WINDOW_COL = NUM_PIXEL_IN_WINDOW_ROW;
-	public static final int MAX_CIRCLE_RADIUS = 4;
+	public static final int MAX_CIRCLE_RADIUS = 3;
 }

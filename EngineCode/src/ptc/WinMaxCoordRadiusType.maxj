@@ -1,0 +1,19 @@
+package ptc;
+
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStructType;
+
+public class WinMaxCoordRadiusType extends DFEStructType {
+	public static String maxPixel = "maxPixel";
+	public static String maxCoordRowIdx = "maxCoordRowIdx";
+	public static String maxCoordColIdx = "maxCoordColIdx";
+	public static String meanRadius = "meanRadius";
+
+	public WinMaxCoordRadiusType() {
+		super(
+			sft(maxPixel, Type.pixelType),
+			sft(maxCoordRowIdx, Type.imageRowIdxType),
+			sft(maxCoordColIdx, Type.imageColIdxType),
+			sft(meanRadius, Type.radiusType)
+		);
+	}
+}
