@@ -59,7 +59,7 @@ class PalmTreeCountingManager extends CustomManager {
 //		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight1", defaultWeight);
 //		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight2", defaultWeight);
 		ei.setTicks("FindWindowMaxAndRadiusKernel", imageSize);
-		ei.setTicks("DetermineWindowMaxPixelKernel", imageSize);
+		ei.setTicks("DetermineWindowMaxPixelKernel", imageSize + Constant.PRELOAD_COORDRADIUS);
 
 		CPUTypes pixelType = CPUTypes.INT32;
 		ei.setStream("imageInput", pixelType, imageSize * pixelType.sizeInBytes());

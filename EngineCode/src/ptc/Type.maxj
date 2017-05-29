@@ -18,4 +18,7 @@ public class Type {
 	 */
 	public static DFEType radiusType = DFETypeFactory.dfeUInt(
 			MathUtils.bitsToAddress(Constant.MAX_CIRCLE_RADIUS * 2 * 100));
+
+	public static DFEType windowIdxType = DFETypeFactory.dfeUInt(
+			MathUtils.bitsToAddress(Constant.TOTAL_WINDOW));
 }
