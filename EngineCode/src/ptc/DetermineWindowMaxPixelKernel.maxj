@@ -1,21 +1,27 @@
 package ptc;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.maxeler.maxcompiler.v2.kernelcompiler.Kernel;
 import com.maxeler.maxcompiler.v2.kernelcompiler.KernelParameters;
 import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.KernelMath;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.Reductions;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.Reductions.StreamMaxInfo;
 import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.Count.Counter;
 import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.Count.WrapMode;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEType;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
 import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStruct;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStructType;
 import com.maxeler.maxcompiler.v2.utils.MathUtils;
 
 public class DetermineWindowMaxPixelKernel extends Kernel {
 	private static final boolean DEBUG_ENABLE = true;
 	private final WinMaxCoordRadiusType winmaxCoordRadiusType = new WinMaxCoordRadiusType();
 
-	private final DFEType coordRadiusDataType;
-	private final CoordRadiusMem coordRadiusMem;
+//	private final DFEType coordRadiusDataType;
+//	private final CoordRadiusMem coordRadiusMem;
 
 
 	public DetermineWindowMaxPixelKernel(KernelParameters parameters) {
@@ -44,20 +50,20 @@ public class DetermineWindowMaxPixelKernel extends Kernel {
 				.withEnable(_pixelColIdxCount.getWrap())
 				).getCount();	/// slow dimension
 
-		DFEVar isWinLastCol = KernelMath.modulo(pixelColIdx,
-				Constant.NUM_PIXEL_IN_WINDOW_ROW)=== (Constant.NUM_PIXEL_IN_WINDOW_ROW - 1);
+		DFEVar isWinFirstCol = KernelMath.modulo(pixelColIdx,
+				Constant.NUM_PIXEL_IN_WINDOW_ROW)=== 0;
 		DFEVar isWinFirstRow = KernelMath.modulo(pixelRowIdx,
 				Constant.NUM_PIXEL_IN_WINDOW_COL) === 0;
-		DFEVar isWinFirstRowLastCol = isWinFirstRow & isWinLastCol;
+		DFEVar isWinFirstRowFirstCol = isWinFirstRow & isWinFirstCol;
 
-		DFEVar possibleCoordRadiusRead = isWinFirstRowLastCol | isPreload ;
+		DFEVar possibleCoordRadiusRead = isWinFirstRowFirstCol | isPreload ;
 		DFEVar coordRadiusReadCount = control.count.makeCounter(
 				control.count.makeParams(MathUtils.bitsToAddress(Constant.TOTAL_WINDOW + 1))
 				.withMax(Constant.TOTAL_WINDOW)
 				.withEnable(possibleCoordRadiusRead)
 				.withWrapMode(WrapMode.STOP_AT_MAX)).getCount();
 
-		DFEVar coordRadiusInputReadEnable = (isPreload | isWinFirstRowLastCol) &
+		DFEVar coordRadiusInputReadEnable = (isPreload | isWinFirstRowFirstCol) &
 			coordRadiusReadCount < Constant.TOTAL_WINDOW;
 
 		/// inputs
@@ -65,47 +71,121 @@ public class DetermineWindowMaxPixelKernel extends Kernel {
 				coordRadiusInputReadEnable);
 		DFEVar pixel = io.input("pixel", Type.pixelType, ~isPreload);
 
-		/// BRAM memory
-		coordRadiusDataType = maxCoordRadius.pack().getType();
-		coordRadiusMem = new CoordRadiusMem(this, coordRadiusDataType, Constant.TOTAL_WINDOW);
+//		printf(coordRadiusInputReadEnable, "max: %d, radius: %d, (%d, %d)\n", getMaxValue(maxCoordRadius), getRadius(maxCoordRadius), getWinMaxRowIdx(maxCoordRadius), getWinMaxColIdx(maxCoordRadius));
 
-		/// write to memory
-		coordRadiusMem.write(coordRadiusReadCount, maxCoordRadius.pack(), coordRadiusInputReadEnable);
-
-		/// read from memory
-		DFEVar [] neighborWindow = new DFEVar[3*3];
-		DFEVar currWindow = locateWindow(pixelRowIdx,pixelColIdx);
-		int neighborWindowIdx = 0;
-		for (int row = -1; row <= 1; row++) {
-			for (int col = -1; col <= 1; col++) {
-				DFEType singedType = dfeInt(Type.windowIdxType.getTotalBits() + 1);
-				DFEVar tagetWin = currWindow.cast(singedType) + (row * Constant.NUM_WINDOW_IN_IMAGE_ROW + col);
-				neighborWindow[neighborWindowIdx] = tagetWin.cast(Type.windowIdxType);
-				neighborWindowIdx++;
-			}
+		/// hold the coordinates and radius from kernel 1
+		DFEStruct [] coordRadiusHold = new DFEStruct[Constant.TOTAL_WINDOW];
+		for (int i = 0; i < coordRadiusHold.length; i++) {
+			DFEVar store = (coordRadiusReadCount === i) & coordRadiusInputReadEnable;
+			coordRadiusHold[i] = Reductions.streamHold(maxCoordRadius, store);
 		}
 
-		DFEVar [] neighborMax = new DFEVar[3*3];
-		for (int i = 0; i < neighborWindow.length; i++) {
-			neighborMax[i] = getMaxValue(winmaxCoordRadiusType.unpack(coordRadiusMem.read(neighborWindow[i])));
+		StreamMaxInfo [] winMax = new StreamMaxInfo[Constant.TOTAL_WINDOW];
+		DFEStructType maxCoordsType = new MaxCoordsType();
+
+		DFEVar isInWindow[] = new DFEVar[Constant.TOTAL_WINDOW];
+		for (int i = 0; i < winMax.length; i++) {
+			/// data to save
+			DFEStruct maxCoord = maxCoordsType.newInstance(this);
+			maxCoord[MaxCoordsType.maxPixel] <== pixel;
+			maxCoord[MaxCoordsType.maxCoordRowIdx] <== pixelRowIdx;
+			maxCoord[MaxCoordsType.maxCoordColIdx] <== pixelColIdx;
+			DFEVar metaData = maxCoord.pack();
+
+			/// when to save the pixel
+			DFEVar enable = fallInWindow(pixelRowIdx, pixelColIdx, coordRadiusHold[i]);
+
+			winMax[i] = Reductions.streamMaxWithMetadata(pixel, metaData, constant.var(false), enable);
+
+			isInWindow[i] = enable;
 		}
 
-		debug.simPrintf("cycleCounter: %d, pixelCounter: %d, curWin: %d, pixel[%d][%d]: %d, ",
-				cycleCounter, pixelCounter,currWindow, pixelRowIdx, pixelColIdx, pixel
-		);
-		for (int i = 0; i < neighborMax.length; i++) {
-			debug.simPrintf("w[" + i + "][%d]:%d, ", neighborWindow[i], neighborMax[i]);
-			if (i == neighborMax.length - 1) {
-				debug.simPrintf("\n");
-			}
+		List<DFEVar> winMaxCord = new ArrayList<DFEVar>();
+		for (int i = 0; i < winMax.length; i++) {
+			winMaxCord.add(winMax[i].getMetaData());
 		}
 
+		/// output condition: output at final
+		DFEVar isOutputEnable = pixelCounter >= Constant.TOTAL_PIXEL - Constant.TOTAL_WINDOW;
+		DFEVar outputAddr = control.count.makeCounter(
+				control.count.makeParams(MathUtils.bitsToAddress(Constant.TOTAL_WINDOW))
+				.withEnable(isOutputEnable)
+				).getCount();
 
-		printf(constant.var(false), "cycleCounter: %d, isPreload: %d, pixelCounter: %d, pixel[%d][%d]: %d, " +
-				"isWinLastCol: %d, isWinFirstRow: %d, writeEnable: %d, maxVal: %d\n",
-				cycleCounter, isPreload, pixelCounter, pixelRowIdx, pixelColIdx, pixel,
-				isWinLastCol, isWinFirstRow, coordRadiusInputReadEnable, getMaxValue(maxCoordRadius)
-		);
+		/// select the one to output
+		DFEStruct out = maxCoordsType.unpack(control.mux(outputAddr, winMaxCord));
+		printf(isOutputEnable, "cycle: %d, pixelCounter: %d, windowMax[%d]: %d @ (%d, %d)\n",
+				cycleCounter, pixelCounter, outputAddr,
+				out[MaxCoordsType.maxPixel],
+				out[MaxCoordsType.maxCoordRowIdx],
+				out[MaxCoordsType.maxCoordColIdx]);
+
+
+//		DFEVar currWindow = locateWindow(pixelRowIdx,pixelColIdx);
+//
+//		debug.simPrintf("cycle: %d, pixelCounter: %d, currWindow: %d, pixel[%d][%d]: %d, fall in: ",
+//				cycleCounter, pixelCounter, currWindow, pixelRowIdx, pixelColIdx, pixel
+//		);
+//		for (int i = 0; i < coordRadiusHold.length; i++) {
+//			debug.simPrintf(isInWindow[i], "[%d], ", constant.var(dfeUInt(32), i));
+//
+//			if (i == coordRadiusHold.length - 1) {
+//				debug.simPrintf("\n");
+//			}
+//		}
+
+//		debug.simPrintf("cycle: %d, pixelCounter: %d, currWindow: %d, pixel[%d][%d]: %d, ",
+//				cycleCounter, pixelCounter, currWindow, pixelRowIdx, pixelColIdx, pixel
+//		);
+//		for (int i = 0; i < coordRadiusHold.length; i++) {
+//			debug.simPrintf("w[" + i + "]:(%d, %d, %d), ",
+//					getMaxValue(coordRadiusHold[i]), getRadius(coordRadiusHold[i]), isInWindow[i]);
+//			if (i == coordRadiusHold.length - 1) {
+//				debug.simPrintf("\n");
+//			}
+//		}
+
+//		/// BRAM memory
+//		coordRadiusDataType = maxCoordRadius.pack().getType();
+//		coordRadiusMem = new CoordRadiusMem(this, coordRadiusDataType, Constant.TOTAL_WINDOW);
+//
+//		/// write to memory
+//		coordRadiusMem.write(coordRadiusReadCount, maxCoordRadius.pack(), coordRadiusInputReadEnable);
+//
+//		/// read from memory
+//		DFEVar [] neighborWindow = new DFEVar[3*3];
+//		DFEVar currWindow = locateWindow(pixelRowIdx,pixelColIdx);
+//		int neighborWindowIdx = 0;
+//		for (int row = -1; row <= 1; row++) {
+//			for (int col = -1; col <= 1; col++) {
+//				DFEType singedType = dfeInt(Type.windowIdxType.getTotalBits() + 1);
+//				DFEVar tagetWin = currWindow.cast(singedType) + (row * Constant.NUM_WINDOW_IN_IMAGE_ROW + col);
+//				neighborWindow[neighborWindowIdx] = tagetWin.cast(Type.windowIdxType);
+//				neighborWindowIdx++;
+//			}
+//		}
+//
+//		DFEVar [] neighborMax = new DFEVar[3*3];
+//		for (int i = 0; i < neighborWindow.length; i++) {
+//			neighborMax[i] = getMaxValue(winmaxCoordRadiusType.unpack(coordRadiusMem.read(neighborWindow[i])));
+//		}
+//
+//		debug.simPrintf("cycleCounter: %d, pixelCounter: %d, curWin: %d, pixel[%d][%d]: %d, ",
+//				cycleCounter, pixelCounter,currWindow, pixelRowIdx, pixelColIdx, pixel
+//		);
+//		for (int i = 0; i < neighborMax.length; i++) {
+//			debug.simPrintf("w[" + i + "][%d]:%d, ", neighborWindow[i], neighborMax[i]);
+//			if (i == neighborMax.length - 1) {
+//				debug.simPrintf("\n");
+//			}
+//		}
+//
+//
+//		printf(constant.var(false), "cycleCounter: %d, isPreload: %d, pixelCounter: %d, pixel[%d][%d]: %d, " +
+//				"isWinLastCol: %d, isWinFirstRow: %d, writeEnable: %d, maxVal: %d\n",
+//				cycleCounter, isPreload, pixelCounter, pixelRowIdx, pixelColIdx, pixel,
+//				isWinLastCol, isWinFirstRow, coordRadiusInputReadEnable, getMaxValue(maxCoordRadius)
+//		);
 
 		io.output("output", Type.pixelType) <== pixel;
 
@@ -113,6 +193,49 @@ public class DetermineWindowMaxPixelKernel extends Kernel {
 //		printf("count: %d, pixel: %d, max: %d, max[-1]: %d, max[-2]: %d\n",
 //				cycleCounter, pixel, max,
 //				stream.offset(max, -1), stream.offset(max, -2));
+	}
+
+	private DFEVar getWinMaxRowIdx(DFEStruct win) {
+		return win[WinMaxCoordRadiusType.maxCoordRowIdx];
+	}
+
+	private DFEVar getWinMaxColIdx(DFEStruct win) {
+		return win[WinMaxCoordRadiusType.maxCoordColIdx];
+	}
+
+	private DFEVar getRadius(DFEStruct win) {
+		return win[WinMaxCoordRadiusType.meanRadius];
+	}
+
+	private DFEVar distSquare(DFEVar r1, DFEVar c1, DFEVar r2, DFEVar c2) {
+		int maxWidth =	Math.max(Math.max(Math.max(
+				r1.getType().getTotalBits(), c1.getType().getTotalBits()),
+						r2.getType().getTotalBits()),
+							c2.getType().getTotalBits());
+
+		DFEType type = dfeUInt(maxWidth * 2);
+		r1 = r1.cast(type);
+		c1 = c1.cast(type);
+		r2 = r2.cast(type);
+		c2 = c2.cast(type);
+
+		DFEVar ds = (r1 - r2) * (r1 - r2) + (c1 - c2) * (c1 - c2);
+
+		DFEType retType = dfeUInt(type.getTotalBits() + MathUtils.bitsToAddress(10000));
+		return ds.cast(retType) * 10000;
+	}
+
+	private DFEVar fallInWindow(DFEVar pixelRowIdx, DFEVar pixelColIdx, DFEStruct win) {
+		DFEVar winMaxRowIdx = getWinMaxRowIdx(win);
+		DFEVar winMaxColIdx = getWinMaxColIdx(win);
+		DFEVar winRadius = getRadius(win);
+
+		DFEVar ds2 = distSquare(pixelRowIdx, pixelColIdx, winMaxRowIdx, winMaxColIdx);
+		DFEVar r2 = winRadius.cast(ds2.getType()) * winRadius.cast(ds2.getType());
+
+//		debug.simPrintf("(%d, %d, %d) to (%d, %d, %d)\n", pixelRowIdx, pixelColIdx, ds2, winMaxRowIdx, winMaxColIdx, r2);
+
+		return ds2 <= r2;
 	}
 
 	private DFEVar locateWindow(DFEVar pixelRowIdx, DFEVar pixelColIdx) {
