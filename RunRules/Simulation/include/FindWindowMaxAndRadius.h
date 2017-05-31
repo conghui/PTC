@@ -6,7 +6,24 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#define FindWindowMaxAndRadius_MAX_CIRCLE_RADIUS (8)
+#define FindWindowMaxAndRadius_NUM_PIXEL_IN_WINDOW_COL (10)
+#define FindWindowMaxAndRadius_superFifo_superFifo_maxInternalFifoSize (512)
+#define FindWindowMaxAndRadius_superFifo_superFifo_fifoWidth (32)
+#define FindWindowMaxAndRadius_superFifo_superFifo_fifoDepth (1073741824)
+#define FindWindowMaxAndRadius_superFifo_superFifo_stagingFifoDepth (512)
+#define FindWindowMaxAndRadius_NUM_WINDOW_IN_IMAGE_ROW (10)
+#define FindWindowMaxAndRadius_NUM_WINDOW_IN_IMAGE_COL (10)
+#define FindWindowMaxAndRadius_NUM_PIXEL_IN_IMAGE_ROW (100)
+#define FindWindowMaxAndRadius_NUM_PIXEL_IN_IMAGE_COL (100)
+#define FindWindowMaxAndRadius_superFifo_superFifo_baseAddress (0)
+#define FindWindowMaxAndRadius_superFifo_superFifo_internalFifoProgFullThreshold (320)
+#define FindWindowMaxAndRadius_superFifo_superFifo_wordsPerBurst (96)
+#define FindWindowMaxAndRadius_superFifo_superFifo_fifoMemoryBaseAddress (0)
 #define FindWindowMaxAndRadius_PCIE_ALIGNMENT (16)
+#define FindWindowMaxAndRadius_NUM_PIXEL_IN_WINDOW_ROW (10)
+#define FindWindowMaxAndRadius_superFifo_superFifo_burstSizeBits (3072)
+#define FindWindowMaxAndRadius_superFifo_superFifo_wordWidth (32)
 
 
 /*----------------------------------------------------------------------------*/
@@ -18,7 +35,7 @@ extern "C" {
 
 /**
  * \brief Basic static function for the interface 'default'.
- * Runs moving average with no weighting.
+ * 
  * \param [in] param_imageSize Interface Parameter "imageSize".
  * \param [in] instream_imageInput The stream should be of size (param_imageSize * 4) bytes.
  * \param [out] outstream_output The stream should be of size (param_imageSize * 4) bytes.
@@ -35,7 +52,7 @@ void FindWindowMaxAndRadius(
  * The status of the run can be checked either by ::max_wait or ::max_nowait;
  * note that one of these *must* be called, so that associated memory can be released.
  * 
- * Runs moving average with no weighting.
+ * 
  * \param [in] param_imageSize Interface Parameter "imageSize".
  * \param [in] instream_imageInput The stream should be of size (param_imageSize * 4) bytes.
  * \param [out] outstream_output The stream should be of size (param_imageSize * 4) bytes.
@@ -48,7 +65,7 @@ max_run_t *FindWindowMaxAndRadius_nonblock(
 
 /**
  * \brief Advanced static interface, structure for the engine interface 'default'
- * Runs moving average with no weighting.
+ * 
  */
 typedef struct { 
 	int32_t param_imageSize; /**<  [in] Interface Parameter "imageSize". */
@@ -58,7 +75,7 @@ typedef struct {
 
 /**
  * \brief Advanced static function for the interface 'default'.
- * Runs moving average with no weighting.
+ * 
  * \param [in] engine The engine on which the actions will be executed.
  * \param [in,out] interface_actions Actions to be executed.
  */
@@ -73,7 +90,7 @@ void FindWindowMaxAndRadius_run(
  * The status of the run can be checked either by ::max_wait or ::max_nowait;
  * note that one of these *must* be called, so that associated memory can be released.
  *
- * Runs moving average with no weighting.
+ * 
  * \param [in] engine The engine on which the actions will be executed.
  * \param [in] interface_actions Actions to be executed.
  * \return A handle on the execution status of the actions, or NULL in case of error.
@@ -84,7 +101,7 @@ max_run_t *FindWindowMaxAndRadius_run_nonblock(
 
 /**
  * \brief Group run advanced static function for the interface 'default'.
- * Runs moving average with no weighting.
+ * 
  * \param [in] group Group to use.
  * \param [in,out] interface_actions Actions to run.
  *
@@ -94,7 +111,7 @@ void FindWindowMaxAndRadius_run_group(max_group_t *group, FindWindowMaxAndRadius
 
 /**
  * \brief Group run advanced static non-blocking function for the interface 'default'.
- * Runs moving average with no weighting.
+ * 
  *
  * Schedule the actions to run on the first device available in the group and return immediately.
  * The status of the run must be checked with ::max_wait. 
@@ -109,7 +126,7 @@ max_run_t *FindWindowMaxAndRadius_run_group_nonblock(max_group_t *group, FindWin
 
 /**
  * \brief Array run advanced static function for the interface 'default'.
- * Runs moving average with no weighting.
+ * 
  * \param [in] engarray The array of devices to use.
  * \param [in,out] interface_actions The array of actions to run.
  *
@@ -120,7 +137,7 @@ void FindWindowMaxAndRadius_run_array(max_engarray_t *engarray, FindWindowMaxAnd
 
 /**
  * \brief Array run advanced static non-blocking function for the interface 'default'.
- * Runs moving average with no weighting.
+ * 
  *
  * Schedule to run the array of actions on the array of engines, and return immediately.
  * The length of interface_actions must match the size of engarray.

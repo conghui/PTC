@@ -10,34 +10,48 @@
  */
 package ptc;
 
+import maxpower.lmem.superfifo.SuperFIFO;
+import maxpower.lmem.superfifo.SuperFIFO.FifoIO;
+
 import com.maxeler.maxcompiler.v2.build.EngineParameters;
 import com.maxeler.maxcompiler.v2.managers.custom.CustomManager;
-import com.maxeler.maxcompiler.v2.managers.custom.blocks.Fanout;
 import com.maxeler.maxcompiler.v2.managers.custom.blocks.KernelBlock;
 import com.maxeler.maxcompiler.v2.managers.engine_interfaces.CPUTypes;
 import com.maxeler.maxcompiler.v2.managers.engine_interfaces.EngineInterface;
+import com.maxeler.maxcompiler.v2.managers.engine_interfaces.EngineInterface.Direction;
 import com.maxeler.maxcompiler.v2.managers.engine_interfaces.InterfaceParam;
+import com.maxeler.utils.MemoryManager;
 
 class PalmTreeCountingManager extends CustomManager {
-	static final int maxWindowSize = 9;
-	static final float defaultWeight = 1.0f;
 
 	public PalmTreeCountingManager(EngineParameters engineParams) {
 		super(engineParams);
+
+		/// set constants
+		setConstants(this);
 
 		KernelBlock findWinMaxRadiusKernel = addKernel(new FindWindowMaxAndRadiusKernel(
 				makeKernelParameters("FindWindowMaxAndRadiusKernel")));
 		KernelBlock kernel2 = addKernel(new DetermineWindowMaxPixelKernel(
 				makeKernelParameters("DetermineWindowMaxPixelKernel")));
 
+		/// create a superFifo
+		MemoryManager lmemOrganizer = new MemoryManager(this);
+		FifoIO superfifo = SuperFIFO.create(this, "superFifo", Type.pixelType, 1024*1024*1024L, lmemOrganizer);
 
-		Fanout imageInputFanout = fanout("imageInputFanout");
-		imageInputFanout.getInput() <== addStreamFromCPU("imageInput");
-		findWinMaxRadiusKernel.getInput("imageInput") <== imageInputFanout.addOutput("tofindWinMaxRadiusKernel");
+		findWinMaxRadiusKernel.getInput("imageInput") <== addStreamFromCPU("imageInput");
 
+		/// save the pixel to LMEM
+		superfifo.write <== findWinMaxRadiusKernel.getOutput("pixel");
+
+		/// connect links for kernel2
 		kernel2.getInput("coordRadius") <== findWinMaxRadiusKernel.getOutput("output");
-		kernel2.getInput("pixel") <== imageInputFanout.addOutput("toDetermineWindowMaxPixelKernel");
+		kernel2.getInput("pixel") <== superfifo.read;
+
+		/// stream back to CPU
 		addStreamToCPU("output") <== kernel2.getOutput("output");
+
+		lmemOrganizer.log();
 	}
 
 
@@ -50,54 +64,27 @@ class PalmTreeCountingManager extends CustomManager {
 	}
 
 	static EngineInterface interfaceDefault() {
-		EngineInterface ei = new EngineInterface(
-				"default",
-				"Runs moving average with no weighting.");
+		EngineInterface ei = new EngineInterface();
 		InterfaceParam imageSize = ei.addParam("imageSize", CPUTypes.INT32);
-//		ei.setScalar("FindWindowMaxAndRadiusKernel", "size", size);
-//		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight0", defaultWeight);
-//		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight1", defaultWeight);
-//		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight2", defaultWeight);
 		ei.setTicks("FindWindowMaxAndRadiusKernel", imageSize);
 		ei.setTicks("DetermineWindowMaxPixelKernel", imageSize + Constant.PRELOAD_COORDRADIUS);
 
 		CPUTypes pixelType = CPUTypes.INT32;
 		ei.setStream("imageInput", pixelType, imageSize * pixelType.sizeInBytes());
 		ei.setStream("output", pixelType, imageSize * pixelType.sizeInBytes());
-//		ei.ignoreAll(Direction.IN_OUT);
-		ei.route("imageInputFanout -> tofindWinMaxRadiusKernel, imageInputFanout -> toDetermineWindowMaxPixelKernel");
+		ei.ignoreAll(Direction.IN_OUT);
 		return ei;
 	}
 
-//	static EngineInterface interfaceDefault() {
-//		EngineInterface ei = new EngineInterface(
-//				"default",
-//				"Runs moving average with no weighting.");
-//		InterfaceParam size = ei.addParam("size", CPUTypes.INT32);
-//		ei.setScalar("FindWindowMaxAndRadiusKernel", "size", size);
-//		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight0", defaultWeight);
-//		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight1", defaultWeight);
-//		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight2", defaultWeight);
-//		ei.setTicks("FindWindowMaxAndRadiusKernel", size);
-//		ei.setStream("x", CPUTypes.FLOAT, size * CPUTypes.FLOAT.sizeInBytes());
-//		ei.setStream("y", CPUTypes.FLOAT, size * CPUTypes.FLOAT.sizeInBytes());
-//		return ei;
-//	}
-
-//	static EngineInterface interfaceVariable() {
-//		EngineInterface ei = new EngineInterface("weighted",
-//				"Runs moving average with weighting.");
-//		InterfaceParam size = ei.addParam("size", CPUTypes.INT32);
-//		InterfaceParamArray weights = ei.addParamArray("weights", CPUTypes.FLOAT);
-//		ei.setScalar("FindWindowMaxAndRadiusKernel", "size", size);
-//		ei.setTicks("FindWindowMaxAndRadiusKernel", size);
-//		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight0", weights[0]);
-//		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight1", weights[1]);
-//		ei.setScalar("FindWindowMaxAndRadiusKernel", "weight2", weights[2]);
-//		ei.setStream("x", CPUTypes.FLOAT, size * CPUTypes.FLOAT.sizeInBytes());
-//		ei.setStream("y", CPUTypes.FLOAT, size * CPUTypes.FLOAT.sizeInBytes());
-//		return ei;
-//	}
+	private void setConstants(CustomManager manager) {
+		manager.addMaxFileConstant("NUM_PIXEL_IN_IMAGE_ROW", Constant.NUM_PIXEL_IN_IMAGE_ROW);
+		manager.addMaxFileConstant("NUM_PIXEL_IN_IMAGE_COL", Constant.NUM_PIXEL_IN_IMAGE_COL);
+		manager.addMaxFileConstant("NUM_PIXEL_IN_WINDOW_ROW", Constant.NUM_PIXEL_IN_WINDOW_ROW);
+		manager.addMaxFileConstant("NUM_PIXEL_IN_WINDOW_COL", Constant.NUM_PIXEL_IN_WINDOW_COL);
+		manager.addMaxFileConstant("NUM_WINDOW_IN_IMAGE_ROW", Constant.NUM_WINDOW_IN_IMAGE_ROW);
+		manager.addMaxFileConstant("NUM_WINDOW_IN_IMAGE_COL", Constant.NUM_WINDOW_IN_IMAGE_COL);
+		manager.addMaxFileConstant("MAX_CIRCLE_RADIUS", Constant.MAX_CIRCLE_RADIUS);
+	}
 
 	private static void validate() {
 		if (Constant.NUM_PIXEL_IN_IMAGE_COL != Constant.NUM_PIXEL_IN_WINDOW_COL * Constant.NUM_WINDOW_IN_IMAGE_COL) {

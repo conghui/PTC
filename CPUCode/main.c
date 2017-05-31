@@ -5,8 +5,13 @@
 #include "Maxfiles.h" 			// Includes .max files
 #include <MaxSLiCInterface.h>	// Simple Live CPU interface
 
-float dataIn[8] = { 1, 0, 2, 0, 4, 1, 8, 3 };
-float dataOut[8];
+const int MAX_CIRCLE_RADIUS       = FindWindowMaxAndRadius_MAX_CIRCLE_RADIUS;
+const int NUM_PIXEL_IN_WINDOW_COL = FindWindowMaxAndRadius_NUM_PIXEL_IN_WINDOW_COL;
+const int NUM_WINDOW_IN_IMAGE_ROW = FindWindowMaxAndRadius_NUM_WINDOW_IN_IMAGE_ROW;
+const int NUM_WINDOW_IN_IMAGE_COL = FindWindowMaxAndRadius_NUM_WINDOW_IN_IMAGE_COL;
+const int NUM_PIXEL_IN_IMAGE_ROW  = FindWindowMaxAndRadius_NUM_PIXEL_IN_IMAGE_ROW;
+const int NUM_PIXEL_IN_IMAGE_COL  = FindWindowMaxAndRadius_NUM_PIXEL_IN_IMAGE_COL;
+const int NUM_PIXEL_IN_WINDOW_ROW = FindWindowMaxAndRadius_NUM_PIXEL_IN_WINDOW_ROW;
 
 void genData(int *data, int nrow, int ncol) {
 	int i, j;
@@ -157,14 +162,18 @@ void calMeanRadius(const int *data, int nrow, int ncol, int radius) {
 	}
 }
 
-int main()
-{
-	const int imageCol = 12;		/// # of column, fast dimension
-	const int imageRow = 9;			/// # of row, slow dimension
-	const int windowLength = 3;	/// window is square
+int test1() {
+	const int imageCol = NUM_PIXEL_IN_IMAGE_ROW;		/// # of column, fast dimension
+	const int imageRow = NUM_PIXEL_IN_IMAGE_COL;			/// # of row, slow dimension
+	const int windowLength = NUM_PIXEL_IN_IMAGE_COL;	/// window is square
 	const int windowRow = imageRow / windowLength;
 	const int windowCol = imageCol / windowLength;
-	const int maxRadius = 3;
+	const int maxRadius = MAX_CIRCLE_RADIUS;
+
+	if (NUM_PIXEL_IN_WINDOW_COL != NUM_PIXEL_IN_WINDOW_ROW) {
+		printf("NUM_PIXEL_IN_WINDOW_COL != NUM_PIXEL_IN_WINDOW_ROW\n");
+		exit(1);
+	}
 
 	int *inputImage = malloc(imageCol * imageRow * sizeof *inputImage);
 	assert(inputImage);
@@ -196,4 +205,65 @@ int main()
 	free(inputImage);
 	free(windowMax);
 	return 0;
+}
+
+int test_palm_s5() {
+	const int imageCol = NUM_PIXEL_IN_IMAGE_ROW;		/// # of column, fast dimension
+	const int imageRow = NUM_PIXEL_IN_IMAGE_COL;			/// # of row, slow dimension
+	const int windowLength = NUM_PIXEL_IN_IMAGE_COL;	/// window is square
+	const int windowRow = imageRow / windowLength;
+	const int windowCol = imageCol / windowLength;
+	const int maxRadius = MAX_CIRCLE_RADIUS;
+
+	if (NUM_PIXEL_IN_WINDOW_COL != NUM_PIXEL_IN_WINDOW_ROW) {
+		printf("NUM_PIXEL_IN_WINDOW_COL != NUM_PIXEL_IN_WINDOW_ROW\n");
+		exit(1);
+	}
+
+	const char *imageFileName = "/home/rice/Desktop/palm_s5test.txt";
+	FILE *fp = fopen(imageFileName, "r");
+	if (fp == NULL) {
+		printf("cannot open file: %d\n", imageFileName);
+		exit(1);
+	}
+
+	/// read file
+	int *inputImage = malloc(imageCol * imageRow * sizeof *inputImage);
+	assert(inputImage);
+	for (int i = 0; i < imageCol * imageRow; i++) {
+		assert(fscanf(fp, "%d", &inputImage[i]) == 1);
+	}
+	fclose(fp);
+
+	int *windowMax = malloc(windowRow * windowCol * sizeof *windowMax);
+	assert(windowMax);
+
+	printf("print input data\n");
+	print2D(inputImage, imageRow, imageCol);
+
+	printf("\nsearch window max\n");
+	searchWindowMax(inputImage, windowMax, imageRow, imageCol, windowLength);
+	print2D(windowMax, windowRow, windowCol);
+
+	printf("\ncalculate mean radius\n");
+	calMeanRadius(inputImage, imageRow, imageCol, maxRadius);
+
+	int *d_windowMax = malloc(imageRow * imageCol * sizeof *d_windowMax);
+	assert(d_windowMax);
+	memset(d_windowMax, 0, imageRow * imageCol * sizeof *d_windowMax);
+
+	printf("Running DFE\n");
+	FindWindowMaxAndRadius(imageRow * imageCol, inputImage, d_windowMax);
+
+	printf("print d_windowMax\n");
+	print2D(d_windowMax, imageRow, imageCol);
+
+	free(inputImage);
+	free(windowMax);
+	return 0;
+}
+
+int main()
+{
+	return test_palm_s5();
 }
