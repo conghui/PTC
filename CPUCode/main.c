@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <limits.h>
 #include <string.h>
+#include <math.h>
 #include <stdlib.h>
 #include "Maxfiles.h" 			// Includes .max files
 #include <MaxSLiCInterface.h>	// Simple Live CPU interface
@@ -12,208 +13,66 @@ const int NUM_WINDOW_IN_IMAGE_COL = FindWindowMaxAndRadius_NUM_WINDOW_IN_IMAGE_C
 const int NUM_PIXEL_IN_IMAGE_ROW  = FindWindowMaxAndRadius_NUM_PIXEL_IN_IMAGE_ROW;
 const int NUM_PIXEL_IN_IMAGE_COL  = FindWindowMaxAndRadius_NUM_PIXEL_IN_IMAGE_COL;
 const int NUM_PIXEL_IN_WINDOW_ROW = FindWindowMaxAndRadius_NUM_PIXEL_IN_WINDOW_ROW;
+const int BURST_SIZE = 384;
 
-void genData(int *data, int nrow, int ncol) {
-	int i, j;
-	int count = 0;
-	for (i = 0; i < nrow; i++) {
-		for (j = 0; j < ncol; j++) {
-//			data[count] = count;
-			data[count] = rand() % 1024;
-			count++;
-		}
-	}
+typedef int pixelType;
+
+typedef struct {
+	pixelType *data;
+	int imageSize;
+	int imageSizeAligned;
+} Image;
+
+
+void releaseImage(Image *image) {
+	free(image->data);
 }
 
-void print2D(const int *data, int nrow, int ncol) {
-	int i, j;
-	for (i = 0; i < nrow; i++) {
-		for (j = 0; j < ncol; j++) {
-			printf("%6d", data[i*ncol + j]);
-		}
-		printf("\n");
-	}
+int burstAlign(int size, int elemSize) {
+	int bytes =ceil(1.0 * size * elemSize / BURST_SIZE) * BURST_SIZE;
+	assert(bytes % elemSize == 0);
+	int alignedSize = bytes / elemSize;
+
+	printf("aligned size: %d, bytes: %d\n", alignedSize, bytes);
+
+	return alignedSize;
 }
 
-int max(int a, int b) {
-	return a > b ? a : b;
-}
-
-int findWMax(const int *data, int row, int col, int ncol, int w) {
-	int i, j;
-	int ret = INT_MIN;
-	int rr = 0;
-	int cc = 0;
-	for (i = 0; i < w; i++) {
-		for (j = 0; j < w; j++) {
-			int r = i + row;
-			int c = j + col;
-			if (data[(r)*ncol+c] > ret) {
-				ret = data[(r)*ncol+c];
-				rr = r;
-				cc = c;
-			}
-		}
-	}
-
-	printf("windowMax: %d, row: %d, col: %d\n", ret, rr, cc);
-	return ret;
-}
-
-void searchWindowMax(const int *data, int *winMax, int nrow, int ncol, int w) {
-	/// window is of size w*w
-	if (!(nrow % w == 0 && ncol % w == 0)) {
-		printf("w must be dividable by nrow and ncol\n");
+Image readImage(const char *fn, int imageSize) {
+	FILE *fp = fopen(fn, "r");
+	if (fp == NULL) {
+		printf("cannot open file: %s\n", fn);
 		exit(1);
 	}
 
-	int i, j;
-	int winCount = 0;
-	for (i = 0; i < nrow; i += w) {
-		for (j = 0; j < ncol; j += w) {
-			winMax[winCount] = findWMax(data, i, j, ncol, w);
-			winCount++;
-		}
-	}
-}
-
-void calMeanRadius(const int *data, int nrow, int ncol, int radius) {
-	int c, r;
-
-	for (r = radius; r < nrow - radius; r++) {
-		for (c = radius; c < ncol - radius; c++) {
-			int d;
-			int diffEastMax = 0;
-			int diffWestMax = 0;
-			int maxEastDiffRadius = 0;
-			int maxWestDiffRadius = 0;
-			int south[2] = {0};
-			int north[2] = {0};
-			float NE[2] = {0}; // northeast
-			float NW[2] = {0}; // northwest
-			float SE[2] = {0}; // southeast
-			float SW[2] = {0}; // southwest
-			for (d = 0; d < radius; d++) {
-				/// east
-				int diff = abs(data[r*ncol+(c+d+1)] - data[r*ncol+(c+d)]);
-				if (diffEastMax < diff) {
-					diffEastMax = diff;
-					maxEastDiffRadius = d + 1;
-				}
-
-				// west
-				diff = abs(data[r*ncol+(c-d-1)] - data[r*ncol+(c-d)]);
-				if (diffWestMax < diff) {
-					diffWestMax = diff;
-					maxWestDiffRadius = d + 1;
-				}
-
-				// south
-				diff = abs(data[(r+d+1)*ncol+c] - data[(r+d)*ncol +c]);
-				if (south[0] < diff) {
-					south[0] = diff;
-					south[1] = d + 1;
-				}
-
-				// north
-				diff = abs(data[(r-d-1)*ncol+c] - data[(r-d)*ncol +c]);
-				if (north[0] < diff) {
-					north[0] = diff;
-					north[1] = d + 1;
-				}
-
-				// northeast
-				diff = abs(data[(r-d-1)*ncol+(c+d+1)] - data[(r-d)*ncol+(c+d)]);
-				if (NE[0] < diff) {
-					NE[0] = diff;
-					NE[1] = (d+1)*1.41;
-				}
-
-				// northwest
-				diff = abs(data[(r-d-1)*ncol+(c-d-1)] - data[(r-d)*ncol+(c-d)]);
-				if (NW[0] < diff) {
-					NW[0] = diff;
-					NW[1] = (d+1)*1.41;
-				}
-
-				// southeast
-				diff = abs(data[(r+d+1)*ncol+(c+d+1)] - data[(r+d)*ncol+(c+d)]);
-				if (SE[0] < diff) {
-					SE[0] = diff;
-					SE[1] = (d+1)*1.41;
-				}
-
-				// southwest
-				diff = abs(data[(r+d+1)*ncol+(c-d-1)] - data[(r+d)*ncol+(c-d)]);
-				if (SW[0] < diff) {
-					SW[0] = diff;
-					SW[1] = (d+1)*1.41;
-				}
-			}
-			float meanRadius = (maxEastDiffRadius + maxWestDiffRadius + south[1] + north[1] + NE[1] + NW[1] + SE[1] + SW[1]) / 8;
-//			printf("pixel: %d, eastDiff: %d, maxDiffRadius: %d, row: %d, col: %d\n", data[r*ncol+(c)], diffEastMax, maxEastDiffRadius, r, c);
-			printf("CPU pixel: %d, East(%d, %d), West(%d, %d), South(%d, %d), North(%d, %d), NE(%.0f, %.2f), NW(%.0f, %.2f), SE(%.0f, %.2f), SW(%.0f, %.2f), meanRadius: %.2f\n", data[r*ncol+(c)],
-					diffEastMax, maxEastDiffRadius,
-					diffWestMax, maxWestDiffRadius,
-					south[0], south[1], north[0], north[1], NE[0], NE[1], NW[0], NW[1], SE[0], SE[1], SW[0], SW[1], meanRadius
-					);
-
-		}
-	}
-}
-
-int test1() {
-	const int imageCol = NUM_PIXEL_IN_IMAGE_ROW;		/// # of column, fast dimension
-	const int imageRow = NUM_PIXEL_IN_IMAGE_COL;			/// # of row, slow dimension
-	const int windowLength = NUM_PIXEL_IN_IMAGE_COL;	/// window is square
-	const int windowRow = imageRow / windowLength;
-	const int windowCol = imageCol / windowLength;
-	const int maxRadius = MAX_CIRCLE_RADIUS;
-
-	if (NUM_PIXEL_IN_WINDOW_COL != NUM_PIXEL_IN_WINDOW_ROW) {
-		printf("NUM_PIXEL_IN_WINDOW_COL != NUM_PIXEL_IN_WINDOW_ROW\n");
-		exit(1);
-	}
-
-	int *inputImage = malloc(imageCol * imageRow * sizeof *inputImage);
+	int *inputImage = malloc(imageSize * sizeof *inputImage);
 	assert(inputImage);
+	for (int i = 0; i < imageSize; i++) {
+		assert(fscanf(fp, "%d", &inputImage[i]) == 1);
+	}
+	fclose(fp);
 
-	int *windowMax = malloc(windowRow * windowCol * sizeof *windowMax);
-	assert(windowMax);
+	Image image;
+	image.imageSize = imageSize;
+	image.imageSizeAligned = burstAlign(imageSize, sizeof *inputImage);
+	image.data = malloc(image.imageSizeAligned * sizeof *inputImage);
+	assert(image.data);
+	memset(image.data, 0, image.imageSizeAligned);
 
-	printf("Generate test input data\n");
-	genData(inputImage, imageRow, imageCol);
-	print2D(inputImage, imageRow, imageCol);
-
-	printf("\nsearch window max\n");
-	searchWindowMax(inputImage, windowMax, imageRow, imageCol, windowLength);
-	print2D(windowMax, windowRow, windowCol);
-
-	printf("\ncalculate mean radius\n");
-	calMeanRadius(inputImage, imageRow, imageCol, maxRadius);
-
-	int *d_windowMax = malloc(imageRow * imageCol * sizeof *d_windowMax);
-	assert(d_windowMax);
-	memset(d_windowMax, 0, imageRow * imageCol * sizeof *d_windowMax);
-
-	printf("Running DFE\n");
-	FindWindowMaxAndRadius(imageRow * imageCol, inputImage, d_windowMax);
-
-	printf("print d_windowMax\n");
-	print2D(d_windowMax, imageRow, imageCol);
+	/// convert it to the right format
+	for (int i = 0; i < imageSize; i++) {
+		image.data[i] = inputImage[i];
+	}
 
 	free(inputImage);
-	free(windowMax);
-	return 0;
+
+	return image;
 }
 
 int test_palm_s5() {
 	const int imageCol = NUM_PIXEL_IN_IMAGE_ROW;		/// # of column, fast dimension
 	const int imageRow = NUM_PIXEL_IN_IMAGE_COL;			/// # of row, slow dimension
-	const int windowLength = NUM_PIXEL_IN_IMAGE_COL;	/// window is square
-	const int windowRow = imageRow / windowLength;
-	const int windowCol = imageCol / windowLength;
-	const int maxRadius = MAX_CIRCLE_RADIUS;
+	const int imageSize = imageRow * imageCol;
 
 	if (NUM_PIXEL_IN_WINDOW_COL != NUM_PIXEL_IN_WINDOW_ROW) {
 		printf("NUM_PIXEL_IN_WINDOW_COL != NUM_PIXEL_IN_WINDOW_ROW\n");
@@ -221,45 +80,20 @@ int test_palm_s5() {
 	}
 
 	const char *imageFileName = "/home/rice/Desktop/palm_s5test.txt";
-	FILE *fp = fopen(imageFileName, "r");
-	if (fp == NULL) {
-		printf("cannot open file: %d\n", imageFileName);
-		exit(1);
-	}
+	Image image = readImage(imageFileName, imageSize);
 
-	/// read file
-	int *inputImage = malloc(imageCol * imageRow * sizeof *inputImage);
-	assert(inputImage);
-	for (int i = 0; i < imageCol * imageRow; i++) {
-		assert(fscanf(fp, "%d", &inputImage[i]) == 1);
-	}
-	fclose(fp);
-
-	int *windowMax = malloc(windowRow * windowCol * sizeof *windowMax);
-	assert(windowMax);
-
-	printf("print input data\n");
-	print2D(inputImage, imageRow, imageCol);
-
-	printf("\nsearch window max\n");
-	searchWindowMax(inputImage, windowMax, imageRow, imageCol, windowLength);
-	print2D(windowMax, windowRow, windowCol);
-
-	printf("\ncalculate mean radius\n");
-	calMeanRadius(inputImage, imageRow, imageCol, maxRadius);
+	printf("Upload image to LMEM\n");
+	FindWindowMaxAndRadius_WriteLMem(image.imageSizeAligned, image.data);
 
 	int *d_windowMax = malloc(imageRow * imageCol * sizeof *d_windowMax);
 	assert(d_windowMax);
 	memset(d_windowMax, 0, imageRow * imageCol * sizeof *d_windowMax);
 
 	printf("Running DFE\n");
-	FindWindowMaxAndRadius(imageRow * imageCol, inputImage, d_windowMax);
+	FindWindowMaxAndRadius(image.imageSizeAligned, image.imageSize, d_windowMax);
 
-	printf("print d_windowMax\n");
-	print2D(d_windowMax, imageRow, imageCol);
-
-	free(inputImage);
-	free(windowMax);
+	free(d_windowMax);
+	releaseImage(&image);
 	return 0;
 }
 

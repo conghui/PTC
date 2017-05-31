@@ -15,7 +15,9 @@ import maxpower.lmem.superfifo.SuperFIFO.FifoIO;
 
 import com.maxeler.maxcompiler.v2.build.EngineParameters;
 import com.maxeler.maxcompiler.v2.managers.custom.CustomManager;
+import com.maxeler.maxcompiler.v2.managers.custom.DFELink;
 import com.maxeler.maxcompiler.v2.managers.custom.blocks.KernelBlock;
+import com.maxeler.maxcompiler.v2.managers.custom.stdlib.MemoryControlGroup;
 import com.maxeler.maxcompiler.v2.managers.engine_interfaces.CPUTypes;
 import com.maxeler.maxcompiler.v2.managers.engine_interfaces.EngineInterface;
 import com.maxeler.maxcompiler.v2.managers.engine_interfaces.EngineInterface.Direction;
@@ -24,22 +26,33 @@ import com.maxeler.utils.MemoryManager;
 
 class PalmTreeCountingManager extends CustomManager {
 
+	private static CPUTypes pixelType = CPUTypes.INT32;
+
 	public PalmTreeCountingManager(EngineParameters engineParams) {
 		super(engineParams);
 
 		/// set constants
 		setConstants(this);
 
+        /// add kernel
 		KernelBlock findWinMaxRadiusKernel = addKernel(new FindWindowMaxAndRadiusKernel(
 				makeKernelParameters("FindWindowMaxAndRadiusKernel")));
 		KernelBlock kernel2 = addKernel(new DetermineWindowMaxPixelKernel(
 				makeKernelParameters("DetermineWindowMaxPixelKernel")));
 
-		/// create a superFifo
+		/// upload data from CPU to LMEM
+		DFELink cpu2lmem = addStreamToOnCardMemory("cpu2lmem",
+				MemoryControlGroup.MemoryAccessPattern.LINEAR_1D);
+		cpu2lmem <== addStreamFromCPU("imageInput");
+
+		/// kernel 1 get pixels from LMEM
+		DFELink lmem2kernel1 = addStreamFromOnCardMemory("lmem2kernel1",
+				MemoryControlGroup.MemoryAccessPattern.LINEAR_1D);
+		findWinMaxRadiusKernel.getInput("imageInput") <== lmem2kernel1;
+
+		/// create a superFifo that store the output pixel from kernel 1
 		MemoryManager lmemOrganizer = new MemoryManager(this);
 		FifoIO superfifo = SuperFIFO.create(this, "superFifo", Type.pixelType, 1024*1024*1024L, lmemOrganizer);
-
-		findWinMaxRadiusKernel.getInput("imageInput") <== addStreamFromCPU("imageInput");
 
 		/// save the pixel to LMEM
 		superfifo.write <== findWinMaxRadiusKernel.getOutput("pixel");
@@ -59,18 +72,39 @@ class PalmTreeCountingManager extends CustomManager {
 		validate();
 		EngineParameters params = new EngineParameters(args);
 		PalmTreeCountingManager manager = new PalmTreeCountingManager(params);
+		manager.createSLiCinterface(interfaceWriteLMem("WriteLMem"));
 		manager.createSLiCinterface(interfaceDefault());
 		manager.build();
 	}
 
-	static EngineInterface interfaceDefault() {
+	private static EngineInterface interfaceWriteLMem(String name) {
+		EngineInterface ei = new EngineInterface(name);
+
+		InterfaceParam alignedSize = ei.addParam("alignedImageSize", CPUTypes.INT32);
+
+		InterfaceParam alignedImageSizeInBytes = alignedSize * pixelType.sizeInBytes();
+		ei.setStream("imageInput", pixelType, alignedImageSizeInBytes);
+
+		InterfaceParam zero = ei.addConstant(0l);
+		ei.setLMemLinear("cpu2lmem", zero, alignedImageSizeInBytes);
+		ei.ignoreAll(Direction.IN_OUT);
+
+		return ei;
+	}
+
+	private static EngineInterface interfaceDefault() {
 		EngineInterface ei = new EngineInterface();
 		InterfaceParam imageSize = ei.addParam("imageSize", CPUTypes.INT32);
+		InterfaceParam alignedSize = ei.addParam("alignedImageSize", CPUTypes.INT32);
+
 		ei.setTicks("FindWindowMaxAndRadiusKernel", imageSize);
 		ei.setTicks("DetermineWindowMaxPixelKernel", imageSize + Constant.PRELOAD_COORDRADIUS);
 
-		CPUTypes pixelType = CPUTypes.INT32;
-		ei.setStream("imageInput", pixelType, imageSize * pixelType.sizeInBytes());
+		/// configure the lmem2kernel1 LMEM
+		InterfaceParam zero = ei.addConstant(0l);
+		InterfaceParam alignedImageSizeInBytes = alignedSize * pixelType.sizeInBytes();
+		ei.setLMemLinear("lmem2kernel1", zero, alignedImageSizeInBytes);
+
 		ei.setStream("output", pixelType, imageSize * pixelType.sizeInBytes());
 		ei.ignoreAll(Direction.IN_OUT);
 		return ei;
