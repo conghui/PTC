@@ -1,21 +1,29 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <buildProfile>
 <common>
-<boardModel type="VECTIS"/>
+<boardModel type="MAIA"/>
 <simulation enabled="false"/>
-<programArgument argument="MPPREndCT" value="4"></programArgument></common>
+<enableMPCX enabled="false"/>
+<programArgument argument="MPPREndCT" value="4"/>
+</common>
 <maxFiles>
-<maxFile buildName="MovingAverageWeighted" buildOrUseExisting="build">
+<maxFile buildName="FindWindowMaxAndRadius" buildOrUseExisting="build">
 <runConfiguration askBeforeAutoBuild="true">
-<mainClass>movingaverageweighted.MovingAverageWeightedManager</mainClass>
-<maxHeapSize>2</maxHeapSize>
+<mainClass>ptc.PalmTreeCountingManager</mainClass>
+<maxHeapSize>4</maxHeapSize>
 </runConfiguration>
 <selectEngineTarget enabled="false">VECTIS</selectEngineTarget>
+<overrideEnableMPCX enabled="false" value="false"/>
 </maxFile>
 </maxFiles>
 <cpuCode targetType="executable">
 <libraryName/>
-<exeName>DefaultApplication</exeName>
+<exeName>ptc</exeName>
+<skin>
+<ancillaryReleaseInformation enabled="false">
+<dir name=""/>
+</ancillaryReleaseInformation>
+</skin>
 <arguments/>
 <remoteExecution enabled="false">
 <remoteMachineName/>

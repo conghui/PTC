@@ -49,20 +49,20 @@ build: maxfiles
 maxfiles: $(MAXFILES_MAX)
 
 #
-# MaxFile: MovingAverageWeighted
+# MaxFile: FindWindowMaxAndRadius
 #
 
 
-BUILDNAME_MAXFILE_1:=MovingAverageWeighted
-MAXFILE_1:=MovingAverageWeighted.max
+BUILDNAME_MAXFILE_1:=FindWindowMaxAndRadius
+MAXFILE_1:=FindWindowMaxAndRadius.max
 
-include/MovingAverageWeighted.h: maxfiles/MovingAverageWeighted.h
+include/FindWindowMaxAndRadius.h: maxfiles/FindWindowMaxAndRadius.h
 	cp $< $@
 
-maxfiles/MovingAverageWeighted.max maxfiles/MovingAverageWeighted.h:
+maxfiles/FindWindowMaxAndRadius.max maxfiles/FindWindowMaxAndRadius.h:
 # Ensure that maxfiles do not get build by this Makefile when running in MaxIDE
 ifndef MAXIDE_RUN
-	test -f $@ || env  MAX_BUILDPARAMS=" DFEModel=VECTIS  target=DFE  maxFileName=MovingAverageWeighted MPPREndCT='4' "  ant -v -f MovingAverageWeighted.xml
+	test -f $@ || env  MAX_BUILDPARAMS=" DFEModel=MAIA  target=DFE  maxFileName=FindWindowMaxAndRadius MPPREndCT='4' "  ant -v -f FindWindowMaxAndRadius.xml
 else
 	test -f $@ || ( echo 'Maxfile unavailable: $@' >/dev/stderr ; exit 1 )
 endif

@@ -14,7 +14,7 @@
     </condition>
     <target name="all" depends="runresult"/>
     <target name="build">
-        <ant inheritAll="false" antfile="../RunRules/DFE/MovingAverageWeighted_Build.xml"/>
+        <ant inheritAll="false" antfile="../RunRules/DFE/FindWindowMaxAndRadius_Build.xml"/>
     </target>
     <target name="run" depends="build">
         <condition property="args" value="">
@@ -22,9 +22,9 @@
                 <isset property="args"/>
             </not>
         </condition>
-        <java classname="movingaverageweighted.MovingAverageWeightedManager" fork="true" failonerror="false" resultproperty="java.result">
+        <java classname="ptc.PalmTreeCountingManager" fork="true" failonerror="false" resultproperty="java.result">
             <env key="MAXSOURCEDIRS" value="src"/>
-            <jvmarg value="-Xmx2048m"/>
+            <jvmarg value="-Xmx4096m"/>
             <arg line="${args}"/>
             <classpath>
                 <pathelement path="${env.ANT_MAXELER_INTERNAL_MAXIDE_JARS}"/>
@@ -48,25 +48,25 @@
         <fail if="java.run.fail" message="java run stage failed."/>
     </target>
     <target name="clean">
-        <ant inheritAll="false" antfile="../RunRules/DFE/MovingAverageWeighted_Build.xml" target="clean"/>
+        <ant inheritAll="false" antfile="../RunRules/DFE/FindWindowMaxAndRadius_Build.xml" target="clean"/>
     </target>
     <target name="jar" depends="build">
         <mkdir dir="../RunRules/DFE/dist/jar"/>
         <copy includeemptydirs="false" todir="../RunRules/DFE/dist/jar">
             <fileset dir="../RunRules/DFE/dist/bin" excludes="**/*.uad, **/*.ucd, **/*.uld, **/*.upd, **/*.udd, **/*.uod, **/*.usd, **/*.utd, **/*.uud, **/*.odd, **/*.ead, **/*.ecd, **/*.eld, **/*.epd, **/*.edd, **/*.eod, **/*.esd, **/*.etd, **/*.eud, **/*.urd*.uml, **/*.ecore, **/*.launch, **/*.java, **/*.maxj, **/package.html"/>
         </copy>
-        <jar destfile="MovingAverageWeightedManager.jar" basedir="../RunRules/DFE/dist/jar">
+        <jar destfile="PalmTreeCountingManager.jar" basedir="../RunRules/DFE/dist/jar">
             <manifest>
-                <attribute name="Main-Class" value="movingaverageweighted.MovingAverageWeightedManager"/>
+                <attribute name="Main-Class" value="ptc.PalmTreeCountingManager"/>
             </manifest>
         </jar>
     </target>
     <target name="help">
-        <echo message="ant -f MovingAverageWeighted.xml -Dargs=&quot;${Value}&quot;&#9;Run project"/>
-        <echo message="ant -f MovingAverageWeighted.xml build&#9;&#9;&#9;Compile project"/>
-        <echo message="ant -f MovingAverageWeighted.xml run -Dargs=&quot;${Value}&quot;&#9;Run project"/>
-        <echo message="ant -f MovingAverageWeighted.xml clean&#9;&#9;&#9;Delete temp folders"/>
-        <echo message="ant -f MovingAverageWeighted.xml jar&#9;&#9;&#9;Create jar package"/>
-        <echo message="ant -f MovingAverageWeighted.xml help&#9;&#9;&#9;Print help message"/>
+        <echo message="ant -f FindWindowMaxAndRadius.xml -Dargs=&quot;${Value}&quot;&#9;Run project"/>
+        <echo message="ant -f FindWindowMaxAndRadius.xml build&#9;&#9;&#9;Compile project"/>
+        <echo message="ant -f FindWindowMaxAndRadius.xml run -Dargs=&quot;${Value}&quot;&#9;Run project"/>
+        <echo message="ant -f FindWindowMaxAndRadius.xml clean&#9;&#9;&#9;Delete temp folders"/>
+        <echo message="ant -f FindWindowMaxAndRadius.xml jar&#9;&#9;&#9;Create jar package"/>
+        <echo message="ant -f FindWindowMaxAndRadius.xml help&#9;&#9;&#9;Print help message"/>
     </target>
 </project>

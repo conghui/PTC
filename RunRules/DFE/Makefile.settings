@@ -6,12 +6,12 @@ MAXCOMPILER_QUOTE   := $(shell printf %q "$(MAXCOMPILERDIR)")
 
 RUNRULE_ARGS        := 
 RUNRULE_RUNENV      := LD_LIBRARY_PATH="$(MAXELEROSDIR)/lib:$(LD_LIBRARY_PATH)" 
-RUNRULE_MAXFILES    := MovingAverageWeighted.max  
-RUNRULE_MAXFILES_H  := MovingAverageWeighted.h 
+RUNRULE_MAXFILES    := FindWindowMaxAndRadius.max  
+RUNRULE_MAXFILES_H  := FindWindowMaxAndRadius.h 
 RUNRULE_CFLAGS      := 
 RUNRULE_LDFLAGS     := 
 
-TARGET_EXEC         := DefaultApplication
+TARGET_EXEC         := ptc
 TARGET_LIBRARY      := 
 
 
