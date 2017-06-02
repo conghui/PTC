@@ -41,7 +41,7 @@ int burstAlign(int size, int oldElemSize, int newElemSize) {
 Image readImage(const char *fn, int imageSize) {
 	FILE *fp = fopen(fn, "r");
 	if (fp == NULL) {
-		printf("cannot open file: %s\n", fn);
+		printf("[ERROR]: cannot open file: %s\n", fn);
 		exit(1);
 	}
 

@@ -4,7 +4,7 @@ USE_SLIC:=1
 
 MAXCOMPILER_QUOTE   := $(shell printf %q "$(MAXCOMPILERDIR)")
 
-RUNRULE_ARGS        := 
+RUNRULE_ARGS        := /home/rice/Desktop/palm_s5test.txt
 RUNRULE_RUNENV      := LD_LIBRARY_PATH="$(MAXELEROSDIR)/lib:$(LD_LIBRARY_PATH)" 
 RUNRULE_MAXFILES    := FindWindowMaxAndRadius.max  
 RUNRULE_MAXFILES_H  := FindWindowMaxAndRadius.h 

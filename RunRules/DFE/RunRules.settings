@@ -24,7 +24,7 @@
 <dir name=""/>
 </ancillaryReleaseInformation>
 </skin>
-<arguments/>
+<arguments>/home/rice/Desktop/palm_s5test.txt</arguments>
 <remoteExecution enabled="false">
 <remoteMachineName/>
 <scriptName/>
