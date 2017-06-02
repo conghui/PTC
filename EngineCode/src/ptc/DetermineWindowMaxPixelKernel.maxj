@@ -118,9 +118,9 @@ public class DetermineWindowMaxPixelKernel extends Kernel {
 
 		printf(isOutputEnable, "%d %d\n", out[MaxCoordsType.maxCoordColIdx], out[MaxCoordsType.maxCoordRowIdx]);
 
-
-		io.output("output", Type.pixelType) <== pixel;
-
+		DFEType cordType = dfeInt(64);
+		io.output("outRow", cordType, isOutputEnable) <== getWinMaxRowIdx(out).cast(cordType);
+		io.output("outCol", cordType, isOutputEnable) <== getWinMaxColIdx(out).cast(cordType);
 	}
 
 	private DFEVar getWinMaxRowIdx(DFEStruct win) {

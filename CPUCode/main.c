@@ -69,7 +69,13 @@ Image readImage(const char *fn, int imageSize) {
 	return image;
 }
 
-int test_palm_s5() {
+int main(int argc, char **argv)
+{
+	if (argc != 2) {
+		printf("Usage: %s input_file\n", argv[0]);
+		exit(1);
+	}
+
 	const int imageCol = NUM_PIXEL_IN_IMAGE_ROW;		/// # of column, fast dimension
 	const int imageRow = NUM_PIXEL_IN_IMAGE_COL;			/// # of row, slow dimension
 	const int imageSize = imageRow * imageCol;
@@ -79,25 +85,30 @@ int test_palm_s5() {
 		exit(1);
 	}
 
-	const char *imageFileName = "/home/rice/Desktop/palm_s5test.txt";
+	const char *imageFileName = argv[1];
+	printf("Input file: %s\n", imageFileName);
+
 	Image image = readImage(imageFileName, imageSize);
 
 	printf("Upload image to LMEM\n");
 	FindWindowMaxAndRadius_WriteLMem(image.imageSizeAligned, image.data);
 
-	pixelType *d_windowMax = malloc(imageRow * imageCol * sizeof *d_windowMax);
-	assert(d_windowMax);
-	memset(d_windowMax, 0, imageRow * imageCol * sizeof *d_windowMax);
+	int totalWindow = NUM_WINDOW_IN_IMAGE_COL * NUM_WINDOW_IN_IMAGE_ROW;
+	int64_t *d_cordRow = malloc(totalWindow * sizeof *d_cordRow);
+	int64_t *d_cordCol = malloc(totalWindow * sizeof *d_cordCol);
 
 	printf("Running DFE\n");
-	FindWindowMaxAndRadius(image.imageSizeAligned, image.imageSize, d_windowMax);
+	FindWindowMaxAndRadius(image.imageSizeAligned, image.imageSize, d_cordCol, d_cordRow);
 
-	free(d_windowMax);
+	printf("Result of kernel2: (row, col)\n");
+	for (int i = 0; i < totalWindow; i++) {
+		printf("win[%d]: (%d, %d)\n", i, (int)d_cordRow[i], (int)d_cordCol[i]);
+	}
+
+	free(d_cordRow);
+	free(d_cordCol);
 	releaseImage(&image);
-	return 0;
-}
 
-int main()
-{
-	return test_palm_s5();
+	printf("program exit normally\n");
+	return 0;
 }

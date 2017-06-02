@@ -62,7 +62,8 @@ class PalmTreeCountingManager extends CustomManager {
 		kernel2.getInput("pixel") <== superfifo.read;
 
 		/// stream back to CPU
-		addStreamToCPU("output") <== kernel2.getOutput("output");
+		addStreamToCPU("outRow") <== kernel2.getOutput("outRow");
+		addStreamToCPU("outCol") <== kernel2.getOutput("outCol");
 
 		lmemOrganizer.log();
 	}
@@ -105,7 +106,9 @@ class PalmTreeCountingManager extends CustomManager {
 		InterfaceParam alignedImageSizeInBytes = alignedSize * pixelType.sizeInBytes();
 		ei.setLMemLinear("lmem2kernel1", zero, alignedImageSizeInBytes);
 
-		ei.setStream("output", pixelType, imageSize * pixelType.sizeInBytes());
+		ei.setStream("outRow", CPUTypes.INT64, Constant.TOTAL_WINDOW * CPUTypes.INT64.sizeInBytes());
+		ei.setStream("outCol", CPUTypes.INT64, Constant.TOTAL_WINDOW * CPUTypes.INT64.sizeInBytes());
+
 		ei.ignoreAll(Direction.IN_OUT);
 		return ei;
 	}

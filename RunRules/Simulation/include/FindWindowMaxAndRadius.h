@@ -170,12 +170,14 @@ max_actions_t* FindWindowMaxAndRadius_WriteLMem_convert(max_file_t *maxfile, Fin
  * 
  * \param [in] param_alignedImageSize Interface Parameter "alignedImageSize".
  * \param [in] param_imageSize Interface Parameter "imageSize".
- * \param [out] outstream_output The stream should be of size (param_imageSize * 1) bytes.
+ * \param [out] outstream_outCol The stream should be of size 800 bytes.
+ * \param [out] outstream_outRow The stream should be of size 800 bytes.
  */
 void FindWindowMaxAndRadius(
 	int32_t param_alignedImageSize,
 	int32_t param_imageSize,
-	uint8_t *outstream_output);
+	int64_t *outstream_outCol,
+	int64_t *outstream_outRow);
 
 /**
  * \brief Basic static non-blocking function for the interface 'default'.
@@ -187,13 +189,15 @@ void FindWindowMaxAndRadius(
  * 
  * \param [in] param_alignedImageSize Interface Parameter "alignedImageSize".
  * \param [in] param_imageSize Interface Parameter "imageSize".
- * \param [out] outstream_output The stream should be of size (param_imageSize * 1) bytes.
+ * \param [out] outstream_outCol The stream should be of size 800 bytes.
+ * \param [out] outstream_outRow The stream should be of size 800 bytes.
  * \return A handle on the execution status, or NULL in case of error.
  */
 max_run_t *FindWindowMaxAndRadius_nonblock(
 	int32_t param_alignedImageSize,
 	int32_t param_imageSize,
-	uint8_t *outstream_output);
+	int64_t *outstream_outCol,
+	int64_t *outstream_outRow);
 
 /**
  * \brief Advanced static interface, structure for the engine interface 'default'
@@ -202,7 +206,8 @@ max_run_t *FindWindowMaxAndRadius_nonblock(
 typedef struct { 
 	int32_t param_alignedImageSize; /**<  [in] Interface Parameter "alignedImageSize". */
 	int32_t param_imageSize; /**<  [in] Interface Parameter "imageSize". */
-	uint8_t *outstream_output; /**<  [out] The stream should be of size (param_imageSize * 1) bytes. */
+	int64_t *outstream_outCol; /**<  [out] The stream should be of size 800 bytes. */
+	int64_t *outstream_outRow; /**<  [out] The stream should be of size 800 bytes. */
 } FindWindowMaxAndRadius_actions_t;
 
 /**
