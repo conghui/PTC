@@ -26,7 +26,7 @@ import com.maxeler.utils.MemoryManager;
 
 class PalmTreeCountingManager extends CustomManager {
 
-	private static CPUTypes pixelType = CPUTypes.INT32;
+	private static CPUTypes pixelType = CPUTypes.UINT8;
 
 	public PalmTreeCountingManager(EngineParameters engineParams) {
 		super(engineParams);

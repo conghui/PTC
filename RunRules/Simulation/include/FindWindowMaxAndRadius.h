@@ -8,8 +8,8 @@ extern "C" {
 
 #define FindWindowMaxAndRadius_MAX_CIRCLE_RADIUS (8)
 #define FindWindowMaxAndRadius_NUM_PIXEL_IN_WINDOW_COL (10)
-#define FindWindowMaxAndRadius_superFifo_superFifo_maxInternalFifoSize (512)
-#define FindWindowMaxAndRadius_superFifo_superFifo_fifoWidth (32)
+#define FindWindowMaxAndRadius_superFifo_superFifo_maxInternalFifoSize (1024)
+#define FindWindowMaxAndRadius_superFifo_superFifo_fifoWidth (8)
 #define FindWindowMaxAndRadius_superFifo_superFifo_fifoDepth (1073741824)
 #define FindWindowMaxAndRadius_superFifo_superFifo_stagingFifoDepth (512)
 #define FindWindowMaxAndRadius_NUM_WINDOW_IN_IMAGE_ROW (10)
@@ -17,13 +17,13 @@ extern "C" {
 #define FindWindowMaxAndRadius_NUM_PIXEL_IN_IMAGE_ROW (100)
 #define FindWindowMaxAndRadius_NUM_PIXEL_IN_IMAGE_COL (100)
 #define FindWindowMaxAndRadius_superFifo_superFifo_baseAddress (0)
-#define FindWindowMaxAndRadius_superFifo_superFifo_internalFifoProgFullThreshold (320)
-#define FindWindowMaxAndRadius_superFifo_superFifo_wordsPerBurst (96)
+#define FindWindowMaxAndRadius_superFifo_superFifo_internalFifoProgFullThreshold (256)
+#define FindWindowMaxAndRadius_superFifo_superFifo_wordsPerBurst (384)
 #define FindWindowMaxAndRadius_superFifo_superFifo_fifoMemoryBaseAddress (0)
 #define FindWindowMaxAndRadius_PCIE_ALIGNMENT (16)
 #define FindWindowMaxAndRadius_NUM_PIXEL_IN_WINDOW_ROW (10)
 #define FindWindowMaxAndRadius_superFifo_superFifo_burstSizeBits (3072)
-#define FindWindowMaxAndRadius_superFifo_superFifo_wordWidth (32)
+#define FindWindowMaxAndRadius_superFifo_superFifo_wordWidth (8)
 
 
 /*----------------------------------------------------------------------------*/
@@ -37,11 +37,11 @@ extern "C" {
  * \brief Basic static function for the interface 'WriteLMem'.
  * 
  * \param [in] param_alignedImageSize Interface Parameter "alignedImageSize".
- * \param [in] instream_imageInput The stream should be of size (param_alignedImageSize * 4) bytes.
+ * \param [in] instream_imageInput The stream should be of size (param_alignedImageSize * 1) bytes.
  */
 void FindWindowMaxAndRadius_WriteLMem(
 	int32_t param_alignedImageSize,
-	const int32_t *instream_imageInput);
+	const uint8_t *instream_imageInput);
 
 /**
  * \brief Basic static non-blocking function for the interface 'WriteLMem'.
@@ -52,12 +52,12 @@ void FindWindowMaxAndRadius_WriteLMem(
  * 
  * 
  * \param [in] param_alignedImageSize Interface Parameter "alignedImageSize".
- * \param [in] instream_imageInput The stream should be of size (param_alignedImageSize * 4) bytes.
+ * \param [in] instream_imageInput The stream should be of size (param_alignedImageSize * 1) bytes.
  * \return A handle on the execution status, or NULL in case of error.
  */
 max_run_t *FindWindowMaxAndRadius_WriteLMem_nonblock(
 	int32_t param_alignedImageSize,
-	const int32_t *instream_imageInput);
+	const uint8_t *instream_imageInput);
 
 /**
  * \brief Advanced static interface, structure for the engine interface 'WriteLMem'
@@ -65,7 +65,7 @@ max_run_t *FindWindowMaxAndRadius_WriteLMem_nonblock(
  */
 typedef struct { 
 	int32_t param_alignedImageSize; /**<  [in] Interface Parameter "alignedImageSize". */
-	const int32_t *instream_imageInput; /**<  [in] The stream should be of size (param_alignedImageSize * 4) bytes. */
+	const uint8_t *instream_imageInput; /**<  [in] The stream should be of size (param_alignedImageSize * 1) bytes. */
 } FindWindowMaxAndRadius_WriteLMem_actions_t;
 
 /**
@@ -170,12 +170,12 @@ max_actions_t* FindWindowMaxAndRadius_WriteLMem_convert(max_file_t *maxfile, Fin
  * 
  * \param [in] param_alignedImageSize Interface Parameter "alignedImageSize".
  * \param [in] param_imageSize Interface Parameter "imageSize".
- * \param [out] outstream_output The stream should be of size (param_imageSize * 4) bytes.
+ * \param [out] outstream_output The stream should be of size (param_imageSize * 1) bytes.
  */
 void FindWindowMaxAndRadius(
 	int32_t param_alignedImageSize,
 	int32_t param_imageSize,
-	int32_t *outstream_output);
+	uint8_t *outstream_output);
 
 /**
  * \brief Basic static non-blocking function for the interface 'default'.
@@ -187,13 +187,13 @@ void FindWindowMaxAndRadius(
  * 
  * \param [in] param_alignedImageSize Interface Parameter "alignedImageSize".
  * \param [in] param_imageSize Interface Parameter "imageSize".
- * \param [out] outstream_output The stream should be of size (param_imageSize * 4) bytes.
+ * \param [out] outstream_output The stream should be of size (param_imageSize * 1) bytes.
  * \return A handle on the execution status, or NULL in case of error.
  */
 max_run_t *FindWindowMaxAndRadius_nonblock(
 	int32_t param_alignedImageSize,
 	int32_t param_imageSize,
-	int32_t *outstream_output);
+	uint8_t *outstream_output);
 
 /**
  * \brief Advanced static interface, structure for the engine interface 'default'
@@ -202,7 +202,7 @@ max_run_t *FindWindowMaxAndRadius_nonblock(
 typedef struct { 
 	int32_t param_alignedImageSize; /**<  [in] Interface Parameter "alignedImageSize". */
 	int32_t param_imageSize; /**<  [in] Interface Parameter "imageSize". */
-	int32_t *outstream_output; /**<  [out] The stream should be of size (param_imageSize * 4) bytes. */
+	uint8_t *outstream_output; /**<  [out] The stream should be of size (param_imageSize * 1) bytes. */
 } FindWindowMaxAndRadius_actions_t;
 
 /**

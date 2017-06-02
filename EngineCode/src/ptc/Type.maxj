@@ -5,7 +5,7 @@ import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFETypeFactory;
 import com.maxeler.maxcompiler.v2.utils.MathUtils;
 
 public class Type {
-	public static DFEType pixelType = DFETypeFactory.dfeInt(32);
+	public static DFEType pixelType = DFETypeFactory.dfeUInt(8);
 
 	public static DFEType imageRowIdxType = DFETypeFactory.dfeUInt(
 			MathUtils.bitsToAddress(Constant.NUM_PIXEL_IN_IMAGE_COL));

@@ -15,7 +15,7 @@ const int NUM_PIXEL_IN_IMAGE_COL  = FindWindowMaxAndRadius_NUM_PIXEL_IN_IMAGE_CO
 const int NUM_PIXEL_IN_WINDOW_ROW = FindWindowMaxAndRadius_NUM_PIXEL_IN_WINDOW_ROW;
 const int BURST_SIZE = 384;
 
-typedef int pixelType;
+typedef uint8_t pixelType;
 
 typedef struct {
 	pixelType *data;
@@ -28,10 +28,10 @@ void releaseImage(Image *image) {
 	free(image->data);
 }
 
-int burstAlign(int size, int elemSize) {
-	int bytes =ceil(1.0 * size * elemSize / BURST_SIZE) * BURST_SIZE;
-	assert(bytes % elemSize == 0);
-	int alignedSize = bytes / elemSize;
+int burstAlign(int size, int oldElemSize, int newElemSize) {
+	int bytes =ceil(1.0 * size * oldElemSize / BURST_SIZE) * BURST_SIZE;
+	assert(bytes % newElemSize == 0);
+	int alignedSize = bytes / newElemSize;
 
 	printf("aligned size: %d, bytes: %d\n", alignedSize, bytes);
 
@@ -54,8 +54,8 @@ Image readImage(const char *fn, int imageSize) {
 
 	Image image;
 	image.imageSize = imageSize;
-	image.imageSizeAligned = burstAlign(imageSize, sizeof *inputImage);
-	image.data = malloc(image.imageSizeAligned * sizeof *inputImage);
+	image.imageSizeAligned = burstAlign(imageSize, sizeof *inputImage, sizeof(pixelType));
+	image.data = malloc(image.imageSizeAligned * sizeof(pixelType));
 	assert(image.data);
 	memset(image.data, 0, image.imageSizeAligned);
 
@@ -85,7 +85,7 @@ int test_palm_s5() {
 	printf("Upload image to LMEM\n");
 	FindWindowMaxAndRadius_WriteLMem(image.imageSizeAligned, image.data);
 
-	int *d_windowMax = malloc(imageRow * imageCol * sizeof *d_windowMax);
+	pixelType *d_windowMax = malloc(imageRow * imageCol * sizeof *d_windowMax);
 	assert(d_windowMax);
 	memset(d_windowMax, 0, imageRow * imageCol * sizeof *d_windowMax);
 
