@@ -5,7 +5,7 @@ USE_SLIC:=1
 MAXCOMPILER_QUOTE   := $(shell printf %q "$(MAXCOMPILERDIR)")
 
 RUNRULE_ARGS        := /home/rice/Desktop/palm_s5test.txt
-RUNRULE_RUNENV      := MAXELEROSDIR="$(MAXCOMPILERDIR)/lib/maxeleros-sim" LD_LIBRARY_PATH="$(MAXCOMPILERDIR)/lib/maxeleros-sim/lib:$$LD_LIBRARY_PATH" SLIC_CONF="use_simulation=ch1mvavgvar;"  
+RUNRULE_RUNENV      := MAXELEROSDIR="$(MAXCOMPILERDIR)/lib/maxeleros-sim" LD_LIBRARY_PATH="$(MAXCOMPILERDIR)/lib/maxeleros-sim/lib:$$LD_LIBRARY_PATH" SLIC_CONF="use_simulation=tigerice;"  
 RUNRULE_MAXFILES    := FindWindowMaxAndRadius.max  
 RUNRULE_MAXFILES_H  := FindWindowMaxAndRadius.h 
 RUNRULE_CFLAGS      := 

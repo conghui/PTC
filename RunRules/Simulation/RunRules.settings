@@ -34,7 +34,7 @@
 <deleteDRAM enabled="false"/>
 <maxDRAMSize enabled="false"/>
 <DRAMFile enabled="false"/>
-<socketName>ch1mvavgvar</socketName>
+<socketName>tigerice</socketName>
 <startStopScript enabled="false"/>
 <numberOfDevices>1</numberOfDevices>
 <ethernetOneEnabled enabled="false"/>
