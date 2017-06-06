@@ -1,0 +1,213 @@
+/**
+ * Document: MaxCompiler Tutorial (maxcompiler-tutorial)
+ * Chapter: 3      Example: 1      Name: Moving Average Simple
+ * MaxFile name: MovingAverageSimple
+ * Summary:
+ * 	Computes a three point moving average over the input stream
+ */
+package ptc;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import maxpower.ops.AssociativeOp;
+import maxpower.utils.TreeReduce;
+
+import com.maxeler.maxcompiler.v2.kernelcompiler.Kernel;
+import com.maxeler.maxcompiler.v2.kernelcompiler.KernelLib;
+import com.maxeler.maxcompiler.v2.kernelcompiler.KernelParameters;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.Reductions;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.Count.Counter;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEType;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFETypeFactory;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStruct;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStructType;
+
+class MergePointKernel extends Kernel {
+	private static final boolean DEBUG_ENABLE = true;
+	private static DFEType indexType = DFETypeFactory.dfeInt(32);
+
+	public static final int NUM_POINTS = Constant.TOTAL_WINDOW;
+	public static final int DIST_SQUARE = Constant.DIST_SQUARE;
+	public static final int ILLEGAL_LOOP_LATENCY = 4;
+	private static PointType pointType = new PointType();
+	private static PointInfoType pointInfoType = new PointInfoType();
+
+	MergePointKernel(KernelParameters parameters) {
+		super(parameters);
+		DFEVar cycleCounter = control.count.simpleCounter(32);
+
+		/// read the point at the first NUM_POINT cycle
+		DFEVar inputPointEnable = cycleCounter < NUM_POINTS;
+		DFEVar rowIdx = io.input("rowIdx", indexType, inputPointEnable);
+		DFEVar colIdx = io.input("colIdx", indexType, inputPointEnable);
+
+		DFEStruct readPoint = pointType.createPoint(rowIdx, colIdx);
+
+		PointMem pointMem = new PointMem(this, pointType.getDFEType(this), NUM_POINTS);
+		pointMem.write(cycleCounter, readPoint.pack(), inputPointEnable);
+
+		/// streamHold the points in first NUM_POINT cycles
+		DFEStruct [] points = new DFEStruct[NUM_POINTS];
+		for (int i = 0; i < points.length; i++) {
+			DFEVar store = inputPointEnable & cycleCounter === i;
+			points[i] = Reductions.streamHold(readPoint, store);
+		}
+
+		Counter illegalLoopCounter = control.count.makeCounter(
+				control.count.makeParams(32)
+				.withEnable(~inputPointEnable)
+				.withMax(ILLEGAL_LOOP_LATENCY));
+
+		DFEVar readAddr = control.count.makeCounter(
+				control.count.makeParams(32)
+				.withEnable(illegalLoopCounter.getWrap())).getCount();
+
+		DFEStruct current = pointType.unpack(pointMem.read(readAddr));
+
+		//// statistic of each pair of points
+		List<DFEVar> statList = new ArrayList<DFEVar>();
+
+//		debug.simPrintf(illegalLoopCounter.getWrap(), "cycle: %d, readAddr: %d ", cycleCounter, readAddr);
+
+		//// initialize the nextValid array (nextValid === not merged)
+		DFEVar [] nextValid = new DFEVar[points.length];
+
+		for (int i = 0; i < points.length; i++) {
+			nextValid[i] = DFETypeFactory.dfeBool().newInstance(this);
+			DFEStruct stat = isTogether(current, points[i], stream.offset(nextValid[i], -ILLEGAL_LOOP_LATENCY));
+			DFEVar isValid = cycleCounter === 0 ? 1 : constant.var(false);
+			DFEVar merged = ((DFEVar) stat[PointInfoType.MERGED]).cast(dfeBool());
+			DFEVar updateNextValid = cycleCounter === 0 | (illegalLoopCounter.getWrap() & merged);
+			nextValid[i] <== Reductions.streamHold(isValid, updateNextValid);
+
+			statList.add(stat.pack());
+
+//			debug.simPrintf(illegalLoopCounter.getWrap(), "v[" + i + "]=%d\n", nextValid[i]);
+		}
+
+
+		/// sum up the points
+		DFEStruct sum = pointInfoType.unpack(TreeReduce.reduce(new PointAdd(), statList));
+
+		/// average
+		DFEVar summerge = sum[PointInfoType.MERGED];
+		DFEVar rowSum = sum[PointInfoType.ROWIDX];
+		DFEVar colSum = sum[PointInfoType.COLIDX];
+		DFEVar rowAvg = summerge === 0 ? 0 : rowSum / summerge;
+		DFEVar colAvg = summerge === 0 ? 0 : colSum / summerge;
+
+		printf(illegalLoopCounter.getWrap(), "rowavg: %d, colavg: %d\n", rowAvg, colAvg);
+
+		DFEType cordType = dfeInt(64);
+		io.output("outRow", cordType, illegalLoopCounter.getWrap()) <== rowAvg.cast(cordType);
+		io.output("outCol", cordType, illegalLoopCounter.getWrap()) <== colAvg.cast(cordType);
+	}
+
+	private static class PointType extends DFEStructType {
+		public static final String ROWIDX = "ROWIDX";
+		public static final String COLIDX = "COLIDX";
+
+		public PointType() {
+			super(sft(ROWIDX, indexType),
+				  sft(COLIDX, indexType));
+		}
+
+		public DFEStruct createPoint(DFEVar rowIdx, DFEVar colIdx) {
+			DFEStruct point = pointType.newInstance(rowIdx.getKernel());
+			point[ROWIDX] <== rowIdx;
+			point[COLIDX] <== colIdx;
+
+			return point;
+		}
+
+		public DFEVar getRowIdx(DFEStruct point) {
+			return point[ROWIDX];
+		}
+
+		public DFEVar getColIdx(DFEStruct point) {
+			return point[COLIDX];
+		}
+
+		public DFEType getDFEType(KernelLib owner) {
+			DFEStruct point = this.newInstance(owner);
+			point[ROWIDX] <== owner.constant.var(indexType, 0);
+			point[COLIDX] <== owner.constant.var(indexType, 0);
+
+			return point.pack().getType();
+		}
+	}
+
+	static class PointInfoType extends DFEStructType {
+		public static String ROWIDX = "ROWIDX";
+		public static String COLIDX = "COLIDX";
+		public static String MERGED =  "MERGED";
+		public static DFEType mergeType = indexType;
+
+		public PointInfoType() {
+			super(sft(ROWIDX, indexType),
+					sft(COLIDX, indexType),
+					sft(MERGED, mergeType));
+		}
+	}
+
+	static class PointAdd implements AssociativeOp<DFEVar> {
+
+		@Override
+		public DFEVar op(DFEVar a, DFEVar b) {
+			DFEStruct sa = pointInfoType.unpack(a);
+			DFEStruct sb = pointInfoType.unpack(b);
+
+			DFEStruct ret = pointInfoType.newInstance(a.getKernel());
+			DFEVar amerged = sa[PointInfoType.MERGED];
+			DFEVar bmerged = sb[PointInfoType.MERGED];
+
+			DFEVar arowidx = amerged !== 0 ? (DFEVar)sa[PointInfoType.ROWIDX] : 0;
+			DFEVar browidx = bmerged !== 0 ? (DFEVar)sb[PointInfoType.ROWIDX] : 0;
+			DFEVar acolidx = amerged !== 0 ? (DFEVar)sa[PointInfoType.COLIDX] : 0;
+			DFEVar bcolidx = bmerged !== 0 ? (DFEVar)sb[PointInfoType.COLIDX] : 0;
+
+			ret[PointInfoType.ROWIDX] <== arowidx + browidx;
+			ret[PointInfoType.COLIDX] <== acolidx + bcolidx;
+			ret[PointInfoType.MERGED] <== (DFEVar)sa[PointInfoType.MERGED] + (DFEVar)sb[PointInfoType.MERGED];
+
+			return ret.pack();
+		}
+
+	}
+
+	private DFEStruct isTogether(DFEStruct current, DFEStruct next, DFEVar nextValid) {
+		DFEStruct pointInfo = pointInfoType.newInstance(current.getKernel());
+		DFEVar distsq = distSq(current, next);
+
+		pointInfo[PointInfoType.ROWIDX] <== pointType.getRowIdx(next);
+		pointInfo[PointInfoType.COLIDX] <== pointType.getColIdx(next);
+
+		DFEVar mg = distsq <= DIST_SQUARE & nextValid;
+		pointInfo[PointInfoType.MERGED] <== mg.cast(PointInfoType.mergeType);
+
+		return pointInfo;
+	}
+
+	private DFEVar distSq(DFEStruct pa, DFEStruct pb) {
+		DFEVar ret = (pointType.getRowIdx(pa) - pointType.getRowIdx(pb)) *
+					 (pointType.getRowIdx(pa) - pointType.getRowIdx(pb)) +
+					 (pointType.getColIdx(pa) - pointType.getColIdx(pb)) *
+					 (pointType.getColIdx(pa) - pointType.getColIdx(pb));
+
+		return ret;
+	}
+
+	private void printf(DFEVar condition, String format, Object...args ) {
+		if (DEBUG_ENABLE) {
+			debug.simPrintf(condition, "[" + this.getName() + "]:" + format, args);
+		}
+	}
+
+	private void printf(String format, Object...args ) {
+		if (DEBUG_ENABLE) {
+			debug.simPrintf(constant.var(true), "[" + this.getName() + "]:" + format, args);
+		}
+	}
+}

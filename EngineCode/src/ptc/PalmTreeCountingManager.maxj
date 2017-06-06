@@ -37,8 +37,12 @@ class PalmTreeCountingManager extends CustomManager {
         /// add kernel
 		KernelBlock findWinMaxRadiusKernel = addKernel(new FindWindowMaxAndRadiusKernel(
 				makeKernelParameters("FindWindowMaxAndRadiusKernel")));
+
 		KernelBlock kernel2 = addKernel(new DetermineWindowMaxPixelKernel(
 				makeKernelParameters("DetermineWindowMaxPixelKernel")));
+
+		KernelBlock kernel3 = addKernel(new MergePointKernel(
+				makeKernelParameters("MergePointKernel")));
 
 		/// upload data from CPU to LMEM
 		DFELink cpu2lmem = addStreamToOnCardMemory("cpu2lmem",
@@ -61,9 +65,13 @@ class PalmTreeCountingManager extends CustomManager {
 		kernel2.getInput("coordRadius") <== findWinMaxRadiusKernel.getOutput("output");
 		kernel2.getInput("pixel") <== superfifo.read;
 
+		/// connect links for kernel 3
+		kernel3.getInput("rowIdx") <== kernel2.getOutput("outRow");
+		kernel3.getInput("colIdx") <== kernel2.getOutput("outCol");
+
 		/// stream back to CPU
-		addStreamToCPU("outRow") <== kernel2.getOutput("outRow");
-		addStreamToCPU("outCol") <== kernel2.getOutput("outCol");
+		addStreamToCPU("outRow") <== kernel3.getOutput("outRow");
+		addStreamToCPU("outCol") <== kernel3.getOutput("outCol");
 
 		lmemOrganizer.log();
 	}
@@ -100,6 +108,9 @@ class PalmTreeCountingManager extends CustomManager {
 
 		ei.setTicks("FindWindowMaxAndRadiusKernel", imageSize);
 		ei.setTicks("DetermineWindowMaxPixelKernel", imageSize + Constant.PRELOAD_COORDRADIUS);
+
+		ei.setTicks("MergePointKernel",	Constant.TOTAL_WINDOW +
+				MergePointKernel.ILLEGAL_LOOP_LATENCY * (Constant.TOTAL_WINDOW +1) - 1);
 
 		/// configure the lmem2kernel1 LMEM
 		InterfaceParam zero = ei.addConstant(0l);

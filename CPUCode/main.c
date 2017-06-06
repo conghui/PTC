@@ -100,7 +100,7 @@ int main(int argc, char **argv)
 	printf("Running DFE\n");
 	FindWindowMaxAndRadius(image.imageSizeAligned, image.imageSize, d_cordCol, d_cordRow);
 
-	printf("Result of kernel2: (row, col)\n");
+	printf("Result of kernel3: (row, col)\n");
 	for (int i = 0; i < totalWindow; i++) {
 		printf("win[%d]: (%d, %d)\n", i, (int)d_cordRow[i], (int)d_cordCol[i]);
 	}

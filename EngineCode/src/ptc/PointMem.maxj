@@ -1,0 +1,29 @@
+package ptc;
+
+import com.maxeler.maxcompiler.v2.kernelcompiler.KernelLib;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.memory.Memory;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEType;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFETypeFactory;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
+import com.maxeler.maxcompiler.v2.utils.MathUtils;
+
+public class PointMem extends KernelLib {
+	private final DFEType addrType;
+	private final DFEType dataType;
+	private final Memory<DFEVar> mem;
+
+	public PointMem(KernelLib owner, DFEType valueType, int depth) {
+		super(owner);
+		this.dataType = valueType;
+		this.addrType = DFETypeFactory.dfeUInt(MathUtils.bitsToAddress(depth));
+		mem = owner.mem.alloc(valueType, depth);
+	}
+
+	public DFEVar read(DFEVar addr) {
+		return mem.read(addr.cast(addrType));
+	}
+
+	public void write(DFEVar address, DFEVar data, DFEVar enable) {
+		mem.write(address.cast(addrType), data.cast(dataType), enable);
+	}
+}

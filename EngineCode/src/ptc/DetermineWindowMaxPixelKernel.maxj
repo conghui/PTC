@@ -17,7 +17,7 @@ import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStructType;
 import com.maxeler.maxcompiler.v2.utils.MathUtils;
 
 public class DetermineWindowMaxPixelKernel extends Kernel {
-	private static final boolean DEBUG_ENABLE = true;
+	private static final boolean DEBUG_ENABLE = false;
 	private final WinMaxCoordRadiusType winmaxCoordRadiusType = new WinMaxCoordRadiusType();
 
 	public DetermineWindowMaxPixelKernel(KernelParameters parameters) {
@@ -118,7 +118,7 @@ public class DetermineWindowMaxPixelKernel extends Kernel {
 
 		printf(isOutputEnable, "%d %d\n", out[MaxCoordsType.maxCoordColIdx], out[MaxCoordsType.maxCoordRowIdx]);
 
-		DFEType cordType = dfeInt(64);
+		DFEType cordType = dfeInt(32);
 		io.output("outRow", cordType, isOutputEnable) <== getWinMaxRowIdx(out).cast(cordType);
 		io.output("outCol", cordType, isOutputEnable) <== getWinMaxColIdx(out).cast(cordType);
 	}

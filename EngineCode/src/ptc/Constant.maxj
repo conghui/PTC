@@ -11,4 +11,5 @@ public class Constant {
 	public static final int TOTAL_PIXEL = NUM_PIXEL_IN_IMAGE_ROW * NUM_PIXEL_IN_IMAGE_COL;
 	public static final int PRELOAD_COORDRADIUS = NUM_WINDOW_IN_IMAGE_ROW + 1;
 	public static final int MAX_CIRCLE_RADIUS = 8;
+	public static final int DIST_SQUARE = 25;		/// for kernel3
 }
