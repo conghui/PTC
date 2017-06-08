@@ -14,10 +14,14 @@ import maxpower.lmem.superfifo.SuperFIFO;
 import maxpower.lmem.superfifo.SuperFIFO.FifoIO;
 
 import com.maxeler.maxcompiler.v2.build.EngineParameters;
+import com.maxeler.maxcompiler.v2.managers.BuildConfig;
+import com.maxeler.maxcompiler.v2.managers.BuildConfig.Effort;
 import com.maxeler.maxcompiler.v2.managers.custom.CustomManager;
 import com.maxeler.maxcompiler.v2.managers.custom.DFELink;
 import com.maxeler.maxcompiler.v2.managers.custom.blocks.KernelBlock;
+import com.maxeler.maxcompiler.v2.managers.custom.stdlib.DebugLevel;
 import com.maxeler.maxcompiler.v2.managers.custom.stdlib.MemoryControlGroup;
+import com.maxeler.maxcompiler.v2.managers.custom.stdlib.MemoryControllerConfig;
 import com.maxeler.maxcompiler.v2.managers.engine_interfaces.CPUTypes;
 import com.maxeler.maxcompiler.v2.managers.engine_interfaces.EngineInterface;
 import com.maxeler.maxcompiler.v2.managers.engine_interfaces.EngineInterface.Direction;
@@ -30,6 +34,19 @@ class PalmTreeCountingManager extends CustomManager {
 
 	public PalmTreeCountingManager(EngineParameters engineParams) {
 		super(engineParams);
+
+		MemoryControllerConfig mcc = new MemoryControllerConfig();
+		config.setOnCardMemoryFrequency(800);
+		mcc.setMAX4qMode(true);
+		mcc.setBurstSize(8);
+
+		mcc.setEnableParityMode(true, true, 72, false);
+		mcc.setEnableFlagCommands(true);
+		config.setMemoryControllerConfig(mcc);
+
+		config.setDefaultStreamClockFrequency(200);
+		debug.setDebugLevel(new DebugLevel().setHasStreamStatus(true));
+
 
 		/// set constants
 		setConstants(this);
@@ -83,6 +100,22 @@ class PalmTreeCountingManager extends CustomManager {
 		PalmTreeCountingManager manager = new PalmTreeCountingManager(params);
 		manager.createSLiCinterface(interfaceWriteLMem("WriteLMem"));
 		manager.createSLiCinterface(interfaceDefault());
+
+	    final BuildConfig buildConfig = manager.getBuildConfig();
+	    int MPPREndCT = 8;
+	    int MPPRThreads = 2;
+	    buildConfig.setMPPRCostTableSearchRange(params.getMPPRStartCT(), MPPREndCT);
+	    buildConfig.setMPPRParallelism(MPPRThreads);
+	    buildConfig.setMPPRRetryNearMissesThreshold(params.getMPPRRetryThreshold());
+	    buildConfig.setBuildEffort(Effort.VERY_HIGH);
+
+	    System.out.println("buildConfig.getBuildEffort: " + buildConfig.getBuildEffort().toString());
+	    System.out.println("MPPRCostTableSearchRange: " + buildConfig.getMPPRCostTableSearchRangeMin()
+	        + " to " + buildConfig.getMPPRCostTableSearchRangeMax());
+	    System.out.println("MPPRParallelism: " + buildConfig.getMPPRParallelism());
+	    System.out.println("MPPRRetryNearMissesThreshold: " + buildConfig.getMPPRRetryNearMissesThreshold());
+
+
 		manager.build();
 	}
 
