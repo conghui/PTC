@@ -44,7 +44,7 @@ class PalmTreeCountingManager extends CustomManager {
 		mcc.setEnableFlagCommands(true);
 		config.setMemoryControllerConfig(mcc);
 
-		config.setDefaultStreamClockFrequency(200);
+		config.setDefaultStreamClockFrequency(100);
 		debug.setDebugLevel(new DebugLevel().setHasStreamStatus(true));
 
 
@@ -107,7 +107,7 @@ class PalmTreeCountingManager extends CustomManager {
 	    buildConfig.setMPPRCostTableSearchRange(params.getMPPRStartCT(), MPPREndCT);
 	    buildConfig.setMPPRParallelism(MPPRThreads);
 	    buildConfig.setMPPRRetryNearMissesThreshold(params.getMPPRRetryThreshold());
-	    buildConfig.setBuildEffort(Effort.VERY_HIGH);
+	    buildConfig.setBuildEffort(Effort.LOW);
 
 	    System.out.println("buildConfig.getBuildEffort: " + buildConfig.getBuildEffort().toString());
 	    System.out.println("MPPRCostTableSearchRange: " + buildConfig.getMPPRCostTableSearchRangeMin()
