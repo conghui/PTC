@@ -34,7 +34,7 @@ class PalmTreeCountingManager extends CustomManager {
 		super(engineParams);
 
 		MemoryControllerConfig mcc = new MemoryControllerConfig();
-		config.setOnCardMemoryFrequency(400);
+		config.setOnCardMemoryFrequency(800);
 		mcc.setMAX4qMode(true);
 		mcc.setBurstSize(8);
 
