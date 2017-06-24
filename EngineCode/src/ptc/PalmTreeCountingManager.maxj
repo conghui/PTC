@@ -14,6 +14,8 @@ import maxpower.lmem.superfifo.SuperFIFO;
 import maxpower.lmem.superfifo.SuperFIFO.FifoIO;
 
 import com.maxeler.maxcompiler.v2.build.EngineParameters;
+import com.maxeler.maxcompiler.v2.managers.BuildConfig;
+import com.maxeler.maxcompiler.v2.managers.BuildConfig.Effort;
 import com.maxeler.maxcompiler.v2.managers.custom.CustomManager;
 import com.maxeler.maxcompiler.v2.managers.custom.DFELink;
 import com.maxeler.maxcompiler.v2.managers.custom.blocks.KernelBlock;
@@ -34,9 +36,9 @@ class PalmTreeCountingManager extends CustomManager {
 		super(engineParams);
 
 		MemoryControllerConfig mcc = new MemoryControllerConfig();
-		config.setOnCardMemoryFrequency(800);
-		mcc.setMAX4qMode(true);
-		mcc.setBurstSize(8);
+//		config.setOnCardMemoryFrequency(800);
+//		mcc.setMAX4qMode(true);
+//		mcc.setBurstSize(8);
 
 		mcc.setEnableParityMode(true, true, 72, false);
 		mcc.setEnableFlagCommands(true);
@@ -99,19 +101,19 @@ class PalmTreeCountingManager extends CustomManager {
 		manager.createSLiCinterface(interfaceWriteLMem("WriteLMem"));
 		manager.createSLiCinterface(interfaceDefault());
 
-//	    final BuildConfig buildConfig = manager.getBuildConfig();
-//	    int MPPREndCT = 8;
-//	    int MPPRThreads = 2;
-//	    buildConfig.setMPPRCostTableSearchRange(params.getMPPRStartCT(), MPPREndCT);
-//	    buildConfig.setMPPRParallelism(MPPRThreads);
-//	    buildConfig.setMPPRRetryNearMissesThreshold(params.getMPPRRetryThreshold());
-//	    buildConfig.setBuildEffort(Effort.LOW);
-//
-//	    System.out.println("buildConfig.getBuildEffort: " + buildConfig.getBuildEffort().toString());
-//	    System.out.println("MPPRCostTableSearchRange: " + buildConfig.getMPPRCostTableSearchRangeMin()
-//	        + " to " + buildConfig.getMPPRCostTableSearchRangeMax());
-//	    System.out.println("MPPRParallelism: " + buildConfig.getMPPRParallelism());
-//	    System.out.println("MPPRRetryNearMissesThreshold: " + buildConfig.getMPPRRetryNearMissesThreshold());
+	    final BuildConfig buildConfig = manager.getBuildConfig();
+	    int MPPREndCT = 8;
+	    int MPPRThreads = 2;
+	    buildConfig.setMPPRCostTableSearchRange(params.getMPPRStartCT(), MPPREndCT);
+	    buildConfig.setMPPRParallelism(MPPRThreads);
+	    buildConfig.setMPPRRetryNearMissesThreshold(params.getMPPRRetryThreshold());
+	    buildConfig.setBuildEffort(Effort.LOW);
+
+	    System.out.println("buildConfig.getBuildEffort: " + buildConfig.getBuildEffort().toString());
+	    System.out.println("MPPRCostTableSearchRange: " + buildConfig.getMPPRCostTableSearchRangeMin()
+	        + " to " + buildConfig.getMPPRCostTableSearchRangeMax());
+	    System.out.println("MPPRParallelism: " + buildConfig.getMPPRParallelism());
+	    System.out.println("MPPRRetryNearMissesThreshold: " + buildConfig.getMPPRRetryNearMissesThreshold());
 
 
 		manager.build();
