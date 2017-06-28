@@ -10,7 +10,7 @@
 <maxFile buildName="FindWindowMaxAndRadius" buildOrUseExisting="build">
 <runConfiguration askBeforeAutoBuild="true">
 <mainClass>ptc.PalmTreeCountingManager</mainClass>
-<maxHeapSize>4</maxHeapSize>
+<maxHeapSize>2</maxHeapSize>
 </runConfiguration>
 <selectEngineTarget enabled="false">VECTIS</selectEngineTarget>
 <overrideEnableMPCX enabled="false" value="false"/>

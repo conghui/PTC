@@ -21,4 +21,8 @@ public class Type {
 
 	public static DFEType windowIdxType = DFETypeFactory.dfeUInt(
 			MathUtils.bitsToAddress(Constant.TOTAL_WINDOW));
+
+	public static DFEType indexType = DFETypeFactory.dfeUInt(
+			MathUtils.bitsToAddress(Math.max(
+					Constant.NUM_PIXEL_IN_IMAGE_COL, Constant.NUM_PIXEL_IN_IMAGE_ROW)));
 }

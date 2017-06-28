@@ -26,7 +26,7 @@ import com.maxeler.maxcompiler.v2.kernelcompiler.types.composite.DFEStructType;
 
 class MergePointKernel extends Kernel {
 	private static final boolean DEBUG_ENABLE = true;
-	private static DFEType indexType = DFETypeFactory.dfeInt(32);
+	private static final DFEType indexType = Type.indexType;
 
 	public static final int NUM_POINTS = Constant.TOTAL_WINDOW;
 	public static final int DIST_SQUARE = Constant.DIST_SQUARE;

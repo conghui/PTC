@@ -24,7 +24,7 @@
         </condition>
         <java classname="ptc.PalmTreeCountingManager" fork="true" failonerror="false" resultproperty="java.result">
             <env key="MAXSOURCEDIRS" value="src"/>
-            <jvmarg value="-Xmx4096m"/>
+            <jvmarg value="-Xmx2048m"/>
             <arg line="${args}"/>
             <classpath>
                 <pathelement path="${env.ANT_MAXELER_INTERNAL_MAXIDE_JARS}"/>

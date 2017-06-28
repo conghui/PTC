@@ -6,6 +6,7 @@ import java.util.List;
 import com.maxeler.maxcompiler.v2.kernelcompiler.Kernel;
 import com.maxeler.maxcompiler.v2.kernelcompiler.KernelParameters;
 import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.KernelMath;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.KernelMath.Range;
 import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.Reductions;
 import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.Reductions.StreamMaxInfo;
 import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.Count.Counter;
@@ -118,7 +119,8 @@ public class DetermineWindowMaxPixelKernel extends Kernel {
 
 		printf(isOutputEnable, "%d %d\n", out[MaxCoordsType.maxCoordColIdx], out[MaxCoordsType.maxCoordRowIdx]);
 
-		DFEType cordType = dfeInt(32);
+		DFEType cordType = Type.indexType;
+		this.getManager().logMsg("indexType width: %d\n", cordType.getTotalBits());
 		io.output("outRow", cordType, isOutputEnable) <== getWinMaxRowIdx(out).cast(cordType);
 		io.output("outCol", cordType, isOutputEnable) <== getWinMaxColIdx(out).cast(cordType);
 	}
@@ -149,8 +151,12 @@ public class DetermineWindowMaxPixelKernel extends Kernel {
 
 		DFEVar ds = (r1 - r2) * (r1 - r2) + (c1 - c2) * (c1 - c2);
 
-		DFEType retType = dfeUInt(type.getTotalBits() + MathUtils.bitsToAddress(10000));
-		return ds.cast(retType) * 10000;
+		Range range = new Range(0, Constant.NUM_PIXEL_IN_IMAGE_COL * Constant.NUM_PIXEL_IN_IMAGE_ROW);
+		DFEVar ret = KernelMath.sqrt(range, ds, type);
+		return ret;
+
+//		DFEType retType = dfeUInt(type.getTotalBits() + MathUtils.bitsToAddress(10000));
+//		return ds.cast(retType) * 10000;
 	}
 
 	private DFEVar fallInWindow(DFEVar pixelRowIdx, DFEVar pixelColIdx, DFEStruct win) {
@@ -159,7 +165,8 @@ public class DetermineWindowMaxPixelKernel extends Kernel {
 		DFEVar winRadius = getRadius(win);
 
 		DFEVar ds2 = distSquare(pixelRowIdx, pixelColIdx, winMaxRowIdx, winMaxColIdx);
-		DFEVar r2 = winRadius.cast(ds2.getType()) * winRadius.cast(ds2.getType());
+		DFEVar r2 = winRadius.cast(ds2.getType());
+//		DFEVar r2 = winRadius.cast(ds2.getType()) * winRadius.cast(ds2.getType());
 
 //		debug.simPrintf("(%d, %d, %d) to (%d, %d, %d)\n", pixelRowIdx, pixelColIdx, ds2, winMaxRowIdx, winMaxColIdx, r2);
 
